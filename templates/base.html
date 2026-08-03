@@ -18,7 +18,7 @@
       <div class="collapse navbar-collapse" id="navMain">
         <form class="d-flex ms-lg-3 my-2 my-lg-0 flex-grow-1" action="{% url 'catalog:product_list' %}" method="get">
           <input class="form-control me-2" type="search" name="q" placeholder="Артикул, название, кросс…" value="{{ request.GET.q }}">
-          <button class="btn btn-accent" type="submit">Найти</button>
+          <button class="btn btn-accent" type="submit">Поиск</button>
         </form>
         <ul class="navbar-nav ms-lg-3 align-items-lg-center">
           {% if user.is_authenticated %}
