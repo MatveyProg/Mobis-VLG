@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Корзина — {{ SHOP_NAME }}{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Корзина</h1>
+{% if items %}
+<table class="table align-middle bg-white">
+  <thead>
+    <tr>
+      <th>Товар</th>
+      <th>Цена</th>
+      <th>Кол-во</th>
+      <th>Сумма</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in items %}
+    <tr>
+      <td>
+        <a href="{{ item.product.get_absolute_url }}">{{ item.product.sku }}</a><br>
+        <span class="text-muted">{{ item.product.name_ru }}</span>
+      </td>
+      <td>{{ item.product.price_rub }} ₽</td>
+      <td style="width:140px">
+        <form method="post" action="{% url 'orders:cart_update' item.pk %}" class="d-flex gap-1">
+          {% csrf_token %}
+          <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control form-control-sm">
+          <button class="btn btn-sm btn-outline-secondary" type="submit">OK</button>
+        </form>
+      </td>
+      <td>{{ item.line_total }} ₽</td>
+      <td>
+        <form method="post" action="{% url 'orders:cart_remove' item.pk %}">
+          {% csrf_token %}
+          <button class="btn btn-sm btn-outline-danger" type="submit">×</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<div class="d-flex justify-content-between align-items-center">
+  <div class="h5 mb-0">Итого: {{ cart.total_rub }} ₽</div>
+  <a href="{% url 'orders:checkout' %}" class="btn btn-accent">Оформить заказ</a>
+</div>
+{% else %}
+<p class="text-muted">Корзина пуста. <a href="{% url 'catalog:product_list' %}">Перейти в каталог</a></p>
+{% endif %}
+{% endblock %}

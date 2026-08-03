@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Отчёт: остатки{% endblock %}
+{% block content %}
+<h1 class="h3">Остатки</h1>
+<form method="get" class="mb-3">
+  <button class="btn btn-outline-secondary" name="export" value="xlsx" type="submit">Excel</button>
+</form>
+<table class="table table-sm bg-white">
+  <thead>
+    <tr>
+      <th>Артикул</th><th>Наименование</th><th>Склад</th><th>Резерв</th><th>Доступно</th>
+      <th>Закупка ₽</th><th>Сумма закупки</th><th>Продажа ₽</th><th>Сумма продажи</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td>{{ r.sku }}</td>
+      <td>{{ r.name }}</td>
+      <td>{{ r.on_hand }}</td>
+      <td>{{ r.reserved }}</td>
+      <td>{{ r.available }}</td>
+      <td>{{ r.avg_purchase }}</td>
+      <td>{{ r.cost_purchase }}</td>
+      <td>{{ r.price_rub }}</td>
+      <td>{{ r.cost_sale }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="9" class="text-muted">Нет данных</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+<a href="{% url 'reports:index' %}">← К отчётам</a>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name_ru }} — {{ SHOP_NAME }}{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-6">
+    {% with main=product.images.first %}
+      {% if main %}
+        <img id="mainImage" src="{{ main.image.url }}" class="img-fluid border" alt="{{ product.name_ru }}">
+      {% else %}
+        <img src="https://placehold.co/600x400/e8e2d8/1f3a5f?text=Mobis-VLG" class="img-fluid border" alt="">
+      {% endif %}
+    {% endwith %}
+    <div class="d-flex flex-wrap gap-2 mt-2">
+      {% for img in product.images.all %}
+        <img src="{{ img.image.url }}" class="gallery-thumb" onclick="document.getElementById('mainImage').src=this.src" alt="">
+      {% endfor %}
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="text-muted">{{ product.sku }} · {{ product.category }} · {{ product.get_condition_display }}</div>
+    <h1 class="h2 mt-2">{{ product.name_ru }}</h1>
+    {% if product.name_en %}<div class="text-muted mb-2">{{ product.name_en }}</div>{% endif %}
+    <div class="price mb-3">{{ product.price_rub }} ₽</div>
+    <p>
+      {% if product.stock.quantity_available > 0 %}
+        В наличии: <strong>{{ product.stock.quantity_available }} шт</strong>
+      {% else %}
+        <span class="text-muted">Нет в наличии</span>
+      {% endif %}
+    </p>
+
+    {% if user.is_authenticated %}
+      {% if user.is_staff %}
+        <p class="small text-muted mb-0">
+          Склад: {{ product.stock.quantity_on_hand|default:0 }} ·
+          резерв {{ product.stock.quantity_reserved|default:0 }} ·
+          доступно {{ product.stock.quantity_available|default:0 }}
+        </p>
+        <a href="{% url 'warehouse:stock_balances' %}?q={{ product.sku }}" class="btn btn-outline-secondary btn-sm mt-2">К остаткам</a>
+      {% elif product.stock.quantity_available > 0 %}
+        <form method="post" action="{% url 'orders:cart_add' product.pk %}" class="row g-2 align-items-end">
+          {% csrf_token %}
+          <div class="col-auto">
+            <label class="form-label">Количество</label>
+            <input type="number" name="quantity" value="1" min="1" max="{{ product.stock.quantity_available }}" class="form-control" style="width:100px">
+          </div>
+          <div class="col-auto">
+            <button type="submit" class="btn btn-accent">В корзину</button>
+          </div>
+        </form>
+      {% endif %}
+    {% else %}
+      <a class="btn btn-accent" href="{% url 'accounts:login' %}?next={{ request.path }}">Войдите, чтобы заказать</a>
+    {% endif %}
+
+    {% if product.cross_numbers.all %}
+      <h2 class="h5 mt-4">Кросс-номера</h2>
+      <ul class="mb-0">
+        {% for c in product.cross_numbers.all %}
+          <li>{{ c.number }}{% if c.comment %} <span class="text-muted">({{ c.comment }})</span>{% endif %}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if product.vehicles.all %}
+      <h2 class="h5 mt-4">Применимость</h2>
+      <ul>
+        {% for v in product.vehicles.all %}
+          <li>{{ v }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+</div>
+
+{% if product.description_ru %}
+  <section class="mt-4">
+    <h2 class="h4">Описание</h2>
+    <p style="white-space: pre-line;">{{ product.description_ru }}</p>
+  </section>
+{% endif %}
+{% endblock %}

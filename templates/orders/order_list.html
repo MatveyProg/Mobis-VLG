@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Мои заказы — {{ SHOP_NAME }}{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Мои заказы</h1>
+{% if orders %}
+<table class="table bg-white">
+  <thead>
+    <tr><th>Номер</th><th>Дата</th><th>Статус</th><th>Сумма</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for order in orders %}
+    <tr>
+      <td>{{ order.number }}</td>
+      <td>{{ order.created_at|date:"d.m.Y H:i" }}</td>
+      <td>{{ order.get_status_display }}</td>
+      <td>{{ order.total_rub }} ₽</td>
+      <td><a href="{% url 'orders:order_detail' order.pk %}">Подробнее</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="text-muted">Заказов пока нет.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h1>Создать заявку по расходу</h1>
+<form method="post">
+  {% csrf_token %}
+  <p>
+    <label>С: <input type="date" name="date_from" required></label>
+    <label>По: <input type="date" name="date_to" required></label>
+  </p>
+  <p>Будут добавлены товары из подтверждённых заказов за период (суммарные количества).</p>
+  <button type="submit" class="default">Создать заявку</button>
+</form>
+{% endblock %}

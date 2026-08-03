@@ -1,0 +1,7 @@
+{% extends "admin/change_list.html" %}
+{% block object-tools-items %}
+  <li>
+    <a href="{% url 'admin:warehouse_purchaserequisition_from_sales' %}" class="addlink">Создать по расходу</a>
+  </li>
+  {{ block.super }}
+{% endblock %}

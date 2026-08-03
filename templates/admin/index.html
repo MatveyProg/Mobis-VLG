@@ -1,0 +1,18 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem; padding: 1rem; background: #fff; border: 1px solid #eee;">
+  <h2 style="margin-top:0;">Быстрые ссылки Mobis-VLG</h2>
+  <p>
+    <a href="{% url 'admin:orders_order_changelist' %}?status__exact=new">Новые заказы</a>
+    &nbsp;|&nbsp;
+    <a href="{% url 'reports:index' %}">Отчёты (Excel)</a>
+    &nbsp;|&nbsp;
+    <a href="{% url 'admin:warehouse_stockin_changelist' %}">Приходы</a>
+    &nbsp;|&nbsp;
+    <a href="{% url 'admin:warehouse_purchaserequisition_changelist' %}">Заявки на закупку</a>
+  </p>
+</div>
+{{ block.super }}
+{% endblock %}

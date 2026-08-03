@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Каталог — {{ SHOP_NAME }}{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <aside class="col-lg-3">
+    <form method="get" class="filters-panel">
+      <h2 class="h5 mb-3">Фильтры</h2>
+      <div class="mb-3">
+        <label class="form-label">Поиск</label>
+        <input type="text" name="q" value="{{ filters.q }}" class="form-control" placeholder="Артикул / кросс">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Категория</label>
+        <select name="category" class="form-select">
+          <option value="">Все</option>
+          {% for cat in categories %}
+            <option value="{{ cat.slug }}" {% if filters.category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+            {% for child in cat.children.all %}
+              <option value="{{ child.slug }}" {% if filters.category == child.slug %}selected{% endif %}>&nbsp;&nbsp;{{ child.name }}</option>
+            {% endfor %}
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Состояние</label>
+        <select name="condition" class="form-select">
+          <option value="">Любое</option>
+          <option value="new" {% if filters.condition == 'new' %}selected{% endif %}>Новый</option>
+          <option value="used" {% if filters.condition == 'used' %}selected{% endif %}>Б/У</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Марка</label>
+        <select name="make" class="form-select" onchange="this.form.submit()">
+          <option value="">Все</option>
+          {% for make in makes %}
+            <option value="{{ make.id }}" {% if filters.make == make.id|stringformat:'s' %}selected{% endif %}>{{ make.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Модель</label>
+        <select name="model" class="form-select">
+          <option value="">Все</option>
+          {% for model in models %}
+            <option value="{{ model.id }}" {% if filters.model == model.id|stringformat:'s' %}selected{% endif %}>{{ model.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Сортировка</label>
+        <select name="sort" class="form-select">
+          <option value="-created_at" {% if filters.sort == '-created_at' %}selected{% endif %}>Сначала новые</option>
+          <option value="price" {% if filters.sort == 'price' %}selected{% endif %}>Цена ↑</option>
+          <option value="-price" {% if filters.sort == '-price' %}selected{% endif %}>Цена ↓</option>
+        </select>
+      </div>
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" name="in_stock" value="1" id="inStock" {% if filters.in_stock == '1' %}checked{% endif %}>
+        <label class="form-check-label" for="inStock">Только в наличии</label>
+      </div>
+      <button class="btn btn-accent w-100" type="submit">Применить</button>
+    </form>
+  </aside>
+
+  <section class="col-lg-9">
+    <div class="d-flex justify-content-between align-items-end mb-3">
+      <h1 class="h3 mb-0">Каталог автозапчастей</h1>
+      <span class="text-muted">Найдено: {{ paginator.count }}</span>
+    </div>
+    <div class="row g-3">
+      {% for product in products %}
+        <div class="col-md-6 col-xl-4">
+          <a href="{{ product.get_absolute_url }}" class="text-decoration-none text-dark">
+            <article class="product-card">
+              {% with img=product.images.first %}
+                {% if img %}
+                  <img src="{{ img.image.url }}" alt="{{ product.name_ru }}">
+                {% else %}
+                  <img src="https://placehold.co/400x180/e8e2d8/1f3a5f?text=Mobis-VLG" alt="">
+                {% endif %}
+              {% endwith %}
+              <div class="p-3">
+                <div class="text-muted small">{{ product.sku }} · {{ product.get_condition_display }}</div>
+                <h2 class="h6 mt-1">{{ product.name_ru }}</h2>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                  <span class="price">{{ product.price_rub }} ₽</span>
+                  {% if product.stock.quantity_available > 0 %}
+                    <span class="badge text-bg-success badge-stock">{{ product.stock.quantity_available }} шт</span>
+                  {% else %}
+                    <span class="badge text-bg-secondary badge-stock">Нет</span>
+                  {% endif %}
+                </div>
+              </div>
+            </article>
+          </a>
+        </div>
+      {% empty %}
+        <div class="col-12"><p class="text-muted">Товары не найдены.</p></div>
+      {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+      <nav class="mt-4">
+        <ul class="pagination">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">Назад</a></li>
+          {% endif %}
+          <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">Вперёд</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

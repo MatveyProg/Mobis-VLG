@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Активные заказы — {{ SHOP_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="h3 mb-0">Активные заказы</h1>
+  <a href="{% url 'warehouse:stock_balances' %}" class="btn btn-outline-secondary btn-sm">Остатки на складе</a>
+</div>
+
+{% if orders %}
+  <div class="d-flex flex-column gap-3">
+    {% for order in orders %}
+      <article class="filters-panel">
+        <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+          <div>
+            <strong>{{ order.number }}</strong>
+            <span class="badge
+              {% if order.status == 'new' %}text-bg-primary
+              {% elif order.status == 'confirmed' %}text-bg-success
+              {% elif order.status == 'assembled' %}text-bg-warning
+              {% else %}text-bg-secondary{% endif %} ms-1">
+              {{ order.get_status_display }}
+            </span>
+            <div class="text-muted small">{{ order.created_at|date:"d.m.Y H:i" }}</div>
+          </div>
+          <div class="text-end">
+            <div>{{ order.customer_name }} · {{ order.phone }}</div>
+            <div class="small text-muted">
+              {{ order.get_messenger_display }}: {{ order.messenger_contact }} ·
+              {{ order.get_delivery_method_display }}
+            </div>
+            {% if order.delivery_address %}
+              <div class="small">{{ order.delivery_address }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <ul class="list-unstyled mb-3">
+          {% for item in order.items.all %}
+            <li class="d-flex justify-content-between gap-2">
+              <span>{{ item.product.sku }} — {{ item.product.name_ru }} × {{ item.quantity }}</span>
+              <strong>{{ item.line_total }} ₽</strong>
+            </li>
+          {% endfor %}
+        </ul>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <strong>Итого: {{ order.total_rub }} ₽</strong>
+          <div class="d-flex flex-wrap gap-2">
+            {% for action in order.next_actions %}
+              <form method="post" action="{% url 'orders:active_order_set_status' order.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="{{ action.code }}">
+                <button type="submit" class="btn btn-sm
+                  {% if action.code == 'cancelled' %}btn-outline-danger
+                  {% elif action.code == 'confirmed' %}btn-accent
+                  {% else %}btn-outline-secondary{% endif %}">
+                  → {{ action.label }}
+                </button>
+              </form>
+            {% endfor %}
+            <a class="btn btn-sm btn-link" href="{% url 'orders:order_detail' order.pk %}">Детали</a>
+          </div>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="text-muted">Активных заказов нет.</p>
+{% endif %}
+{% endblock %}

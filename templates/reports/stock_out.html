@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Отчёт: расход{% endblock %}
+{% block content %}
+<h1 class="h3">Расход</h1>
+<form class="row g-2 mb-3" method="get">
+  <div class="col-auto"><input type="date" name="from" value="{{ date_from }}" class="form-control"></div>
+  <div class="col-auto"><input type="date" name="to" value="{{ date_to }}" class="form-control"></div>
+  <div class="col-auto"><button class="btn btn-accent" type="submit">Показать</button></div>
+  <div class="col-auto"><button class="btn btn-outline-secondary" name="export" value="xlsx" type="submit">Excel</button></div>
+</form>
+<table class="table table-sm bg-white">
+  <thead><tr><th>Дата</th><th>№ заказа</th><th>Клиент</th><th>Артикул</th><th>Наименование</th><th>Кол-во</th><th>Цена ₽</th><th>Сумма ₽</th></tr></thead>
+  <tbody>
+  {% for row in rows %}
+    <tr>
+      <td>{{ row.order.status_changed_at|date:"d.m.Y H:i" }}</td>
+      <td>{{ row.order.number }}</td>
+      <td>{{ row.order.customer_name }}</td>
+      <td>{{ row.product.sku }}</td>
+      <td>{{ row.product.name_ru }}</td>
+      <td>{{ row.quantity }}</td>
+      <td>{{ row.price_rub }}</td>
+      <td>{{ row.line_total }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="8" class="text-muted">Нет данных</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+<a href="{% url 'reports:index' %}">← К отчётам</a>
+{% endblock %}

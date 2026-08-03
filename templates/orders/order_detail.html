@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Заказ {{ order.number }} — {{ SHOP_NAME }}{% endblock %}
+{% block content %}
+<a href="{% url 'orders:order_list' %}" class="text-decoration-none">← К списку</a>
+<h1 class="h3 mt-2">Заказ {{ order.number }}</h1>
+<p>Статус: <strong>{{ order.get_status_display }}</strong> · {{ order.created_at|date:"d.m.Y H:i" }}</p>
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="filters-panel">
+      <h2 class="h5">Контакты</h2>
+      <p class="mb-1">{{ order.customer_name }}</p>
+      <p class="mb-1">{{ order.phone }}</p>
+      <p class="mb-1">{{ order.get_messenger_display }}: {{ order.messenger_contact }}</p>
+      <p class="mb-1">{{ order.get_delivery_method_display }}</p>
+      {% if order.delivery_address %}<p class="mb-0">{{ order.delivery_address }}</p>{% endif %}
+      {% if order.comment %}<p class="mt-2 mb-0 text-muted">{{ order.comment }}</p>{% endif %}
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="filters-panel">
+      <h2 class="h5">Состав</h2>
+      <ul class="list-unstyled mb-3">
+        {% for item in order.items.all %}
+          <li class="mb-2 d-flex justify-content-between">
+            <span>{{ item.product.sku }} — {{ item.product.name_ru }} × {{ item.quantity }}</span>
+            <strong>{{ item.line_total }} ₽</strong>
+          </li>
+        {% endfor %}
+      </ul>
+      <div class="d-flex justify-content-between"><span>Итого</span><strong>{{ order.total_rub }} ₽</strong></div>
+    </div>
+  </div>
+</div>
+{% if order.status_history.all %}
+  <h2 class="h5 mt-4">История статусов</h2>
+  <ul>
+    {% for h in order.status_history.all %}
+      <li>{{ h.changed_at|date:"d.m.Y H:i" }} — {{ h.new_status }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+{% endblock %}

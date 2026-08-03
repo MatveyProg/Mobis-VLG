@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Отчёт: приход{% endblock %}
+{% block content %}
+<h1 class="h3">Приход</h1>
+<form class="row g-2 mb-3" method="get">
+  <div class="col-auto"><input type="date" name="from" value="{{ date_from }}" class="form-control"></div>
+  <div class="col-auto"><input type="date" name="to" value="{{ date_to }}" class="form-control"></div>
+  <div class="col-auto">
+    <select name="supplier" class="form-select">
+      <option value="">Все поставщики</option>
+      {% for s in suppliers %}
+        <option value="{{ s.id }}" {% if supplier_id == s.id|stringformat:'s' %}selected{% endif %}>{{ s.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto"><button class="btn btn-accent" type="submit">Показать</button></div>
+  <div class="col-auto"><button class="btn btn-outline-secondary" name="export" value="xlsx" type="submit">Excel</button></div>
+</form>
+<table class="table table-sm bg-white">
+  <thead><tr><th>Дата</th><th>Поставщик</th><th>Артикул</th><th>Наименование</th><th>Кол-во</th><th>Цена ₽</th><th>Сумма ₽</th></tr></thead>
+  <tbody>
+  {% for row in rows %}
+    <tr>
+      <td>{{ row.stock_in.date|date:"d.m.Y H:i" }}</td>
+      <td>{{ row.stock_in.supplier }}</td>
+      <td>{{ row.product.sku }}</td>
+      <td>{{ row.product.name_ru }}</td>
+      <td>{{ row.quantity }}</td>
+      <td>{{ row.purchase_price_rub }}</td>
+      <td>{% widthratio row.quantity 1 row.purchase_price_rub %}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="7" class="text-muted">Нет данных</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+<a href="{% url 'reports:index' %}">← К отчётам</a>
+{% endblock %}
