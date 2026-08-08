@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Приход #{{ stock_in.pk }} — {{ SHOP_NAME }}{% endblock %}
+{% block content %}
+<a href="{% url 'warehouse:stock_in_list' %}" class="text-decoration-none">← К приходам</a>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mt-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">Приход #{{ stock_in.pk }}</h1>
+    {% if stock_in.is_posted %}
+      <span class="badge text-bg-success">Проведён</span>
+    {% else %}
+      <span class="badge text-bg-warning">Черновик</span>
+    {% endif %}
+  </div>
+  {% if editable %}
+    <form method="post" action="{% url 'warehouse:stock_in_post' stock_in.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-accent" {% if not stock_in.items.all %}disabled{% endif %}>Провести</button>
+    </form>
+  {% endif %}
+</div>
+
+{% if header_form %}
+<form method="post" class="filters-panel mb-3">
+  {% csrf_token %}
+  <input type="hidden" name="form" value="header">
+  <div class="row g-2">
+    <div class="col-md-4">
+      <label class="form-label">Поставщик</label>
+      {{ header_form.supplier }}
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Дата</label>
+      {{ header_form.date }}
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Заявка</label>
+      {{ header_form.requisition }}
+    </div>
+  </div>
+  <button type="submit" class="btn btn-sm btn-outline-secondary mt-2">Сохранить шапку</button>
+</form>
+{% else %}
+<div class="filters-panel mb-3">
+  <p class="mb-1"><strong>Поставщик:</strong> {{ stock_in.supplier }}</p>
+  <p class="mb-1"><strong>Дата:</strong> {{ stock_in.date|date:"d.m.Y H:i" }}</p>
+  {% if stock_in.requisition %}
+    <p class="mb-0"><strong>Заявка:</strong> <a href="{% url 'warehouse:requisition_detail' stock_in.requisition.pk %}">{{ stock_in.requisition.number }}</a></p>
+  {% endif %}
+</div>
+{% endif %}
+
+<h2 class="h5">Строки</h2>
+<div class="table-responsive mb-3">
+  <table class="table table-sm bg-white align-middle">
+    <thead>
+      <tr>
+        <th>Артикул</th>
+        <th>Наименование</th>
+        <th class="text-end">Кол-во</th>
+        <th class="text-end">Цена ₽</th>
+        <th class="text-end">Сумма ₽</th>
+        {% if editable %}<th></th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in stock_in.items.all %}
+        <tr>
+          <td>{{ item.product.sku }}</td>
+          <td>{{ item.product.name_ru }}</td>
+          <td class="text-end">{{ item.quantity }}</td>
+          <td class="text-end">{{ item.purchase_price_rub }}</td>
+          <td class="text-end">{{ item.line_total }}</td>
+          {% if editable %}
+            <td>
+              <form method="post" action="{% url 'warehouse:stock_in_delete_item' stock_in.pk item.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">×</button>
+              </form>
+            </td>
+          {% endif %}
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="text-muted">Строк нет — добавьте товары перед проведением</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if editable %}
+<div class="filters-panel">
+  <h3 class="h6">Добавить строку</h3>
+  <form method="post" action="{% url 'warehouse:stock_in_add_item' stock_in.pk %}" class="row g-2 align-items-end">
+    {% csrf_token %}
+    <div class="col-md-3">
+      <label class="form-label">{{ item_form.product_sku.label }}</label>
+      {{ item_form.product_sku }}
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">{{ item_form.quantity.label }}</label>
+      {{ item_form.quantity }}
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">{{ item_form.purchase_price_rub.label }}</label>
+      {{ item_form.purchase_price_rub }}
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-accent">Добавить</button>
+    </div>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Заявка по расходу — {{ SHOP_NAME }}{% endblock %}
+{% block content %}
+<a href="{% url 'warehouse:requisition_list' %}" class="text-decoration-none">← К заявкам</a>
+<h1 class="h3 mt-2 mb-3">Создать заявку по расходу</h1>
+<p class="text-muted">Подтянутся товары из подтверждённых заказов за выбранный период.</p>
+<form method="post" class="filters-panel col-md-6">
+  {% csrf_token %}
+  {% for field in form %}
+    <div class="mb-3">
+      <label class="form-label">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+    </div>
+  {% endfor %}
+  <button class="btn btn-accent" type="submit">Сформировать</button>
+</form>
+{% endblock %}

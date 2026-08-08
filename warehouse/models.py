@@ -166,6 +166,10 @@ class StockInItem(models.Model):
     def __str__(self):
         return f'{self.product.sku} × {self.quantity}'
 
+    @property
+    def line_total(self):
+        return self.quantity * self.purchase_price_rub
+
 
 class PurchaseRequisition(models.Model):
     class Status(models.TextChoices):

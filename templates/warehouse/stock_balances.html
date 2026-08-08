@@ -3,7 +3,11 @@
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
   <h1 class="h3 mb-0">Остатки на складе</h1>
-  <a href="{% url 'orders:active_orders' %}" class="btn btn-outline-secondary btn-sm">Активные заказы</a>
+  <div class="d-flex gap-2">
+    <a href="{% url 'warehouse:requisition_list' %}" class="btn btn-outline-secondary btn-sm">Заявки</a>
+    <a href="{% url 'warehouse:stock_in_list' %}" class="btn btn-outline-secondary btn-sm">Приход</a>
+    <a href="{% url 'orders:active_orders' %}" class="btn btn-outline-secondary btn-sm">Заказы</a>
+  </div>
 </div>
 
 <form method="get" class="row g-2 mb-3">

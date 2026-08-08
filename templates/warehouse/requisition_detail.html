@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}{{ requisition.number }} — {{ SHOP_NAME }}{% endblock %}
+{% block content %}
+<a href="{% url 'warehouse:requisition_list' %}" class="text-decoration-none">← К заявкам</a>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mt-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">{{ requisition.number }}</h1>
+    <span class="badge text-bg-secondary">{{ requisition.get_status_display }}</span>
+    <span class="text-muted small ms-2">{{ requisition.created_at|date:"d.m.Y H:i" }}</span>
+  </div>
+  <div class="d-flex flex-wrap gap-2 align-items-center">
+    <a href="{% url 'warehouse:requisition_export' requisition.pk %}" class="btn btn-sm btn-outline-secondary">Excel</a>
+    {% for action in next_statuses %}
+      <form method="post" action="{% url 'warehouse:requisition_set_status' requisition.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="{{ action.code }}">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">→ {{ action.label }}</button>
+      </form>
+    {% endfor %}
+  </div>
+</div>
+
+{% if editable %}
+<form method="post" class="filters-panel mb-3">
+  {% csrf_token %}
+  <input type="hidden" name="form" value="header">
+  <div class="row g-2">
+    <div class="col-md-4">
+      <label class="form-label">Номер заявки</label>
+      {{ header_form.number }}
+      {% if header_form.number.errors %}<div class="text-danger small">{{ header_form.number.errors }}</div>{% endif %}
+    </div>
+    <div class="col-md-8">
+      <label class="form-label">Комментарий</label>
+      {{ header_form.note }}
+    </div>
+  </div>
+  <button type="submit" class="btn btn-sm btn-outline-secondary mt-2">Сохранить</button>
+</form>
+{% else %}
+  {% if requisition.note %}<p class="text-muted">{{ requisition.note }}</p>{% endif %}
+{% endif %}
+
+<h2 class="h5">Позиции</h2>
+<div class="table-responsive mb-3">
+  <table class="table table-sm bg-white align-middle">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Артикул</th>
+        <th>Наименование (англ)</th>
+        <th class="text-end">Кол-во</th>
+        <th class="text-end">₩/ед</th>
+        <th class="text-end">Сумма ₩</th>
+        <th class="text-end">₽/ед</th>
+        <th class="text-end">Оприход.</th>
+        <th class="text-end">Осталось</th>
+        {% if editable %}<th></th>{% endif %}
+        {% if requisition.status != 'received' %}<th class="text-center">Приход</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in requisition.items.all %}
+        <tr>
+          <td>{{ item.line_number }}</td>
+          <td>{{ item.product.sku }}</td>
+          <td>{{ item.product.name_en|default:item.product.name_ru }}</td>
+          <td class="text-end">{{ item.quantity }}</td>
+          <td class="text-end">{{ item.purchase_price_krw }}</td>
+          <td class="text-end fw-semibold">{{ item.sum_krw }}</td>
+          <td class="text-end">{{ item.purchase_price_rub }}</td>
+          <td class="text-end">{{ item.quantity_received }}</td>
+          <td class="text-end fw-semibold">{{ item.quantity_remaining }}</td>
+          {% if editable %}
+            <td>
+              <form method="post" action="{% url 'warehouse:requisition_delete_item' requisition.pk item.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">×</button>
+              </form>
+            </td>
+          {% endif %}
+          {% if requisition.status != 'received' and item.quantity_remaining %}
+            <td class="text-center">
+              <input type="checkbox" name="receive_{{ item.pk }}" value="1" form="receiveForm" class="form-check-input">
+              <input type="number" name="qty_{{ item.pk }}" value="{{ item.quantity_remaining }}" min="1" max="{{ item.quantity_remaining }}"
+                     form="receiveForm" class="form-control form-control-sm d-inline-block ms-1" style="width:70px">
+            </td>
+          {% elif requisition.status != 'received' %}
+            <td></td>
+          {% endif %}
+        </tr>
+      {% empty %}
+        <tr><td colspan="11" class="text-muted">Строк нет</td></tr>
+      {% endfor %}
+    </tbody>
+    {% if requisition.items.all %}
+    <tfoot>
+      <tr class="table-light fw-semibold">
+        <td colspan="5" class="text-end">Итого:</td>
+        <td class="text-end">{{ total_krw }} ₩</td>
+        <td class="text-end">{{ total_rub }} ₽</td>
+        <td colspan="99"></td>
+      </tr>
+    </tfoot>
+    {% endif %}
+  </table>
+</div>
+
+{% if editable %}
+  <div class="filters-panel mb-4">
+    <h3 class="h6">Добавить позицию</h3>
+    <p class="small text-muted mb-2">Цены ₩ и ₽ подтягиваются из карточки товара.</p>
+    <form method="post" action="{% url 'warehouse:requisition_add_item' requisition.pk %}" class="row g-2 align-items-end">
+      {% csrf_token %}
+      <div class="col-md-4">
+        <label class="form-label">{{ item_form.product_sku.label }}</label>
+        {{ item_form.product_sku }}
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">{{ item_form.quantity.label }}</label>
+        {{ item_form.quantity }}
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-accent">Добавить</button>
+      </div>
+    </form>
+  </div>
+{% endif %}
+
+{% if requisition.items.all and requisition.status != 'received' %}
+  <div class="filters-panel mb-4">
+    <h3 class="h6">Частичный приход по заявке</h3>
+    <p class="small text-muted mb-2">Отметьте строки в таблице, выберите поставщика и проведите приход.</p>
+    <form method="post" action="{% url 'warehouse:requisition_receive' requisition.pk %}" id="receiveForm" class="row g-2 align-items-end">
+      {% csrf_token %}
+      <div class="col-md-4">
+        <label class="form-label">Поставщик</label>
+        <select name="supplier" class="form-select" required>
+          <option value="">— выберите —</option>
+          {% for s in suppliers %}
+            <option value="{{ s.id }}">{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-accent">Оприходовать выбранное</button>
+      </div>
+    </form>
+  </div>
+{% endif %}
+
+{% if requisition.stock_ins.all %}
+  <h2 class="h5">Связанные приходы</h2>
+  <ul>
+    {% for si in requisition.stock_ins.all %}
+      <li>
+        <a href="{% url 'warehouse:stock_in_detail' si.pk %}">Приход #{{ si.pk }}</a>
+        — {% if si.is_posted %}проведён{% else %}черновик{% endif %}, {{ si.date|date:"d.m.Y H:i" }}
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+{% if requisition.status_history.all %}
+  <h2 class="h5 mt-3">История статусов</h2>
+  <ul class="small text-muted">
+    {% for h in requisition.status_history.all %}
+      <li>{{ h.changed_at|date:"d.m.Y H:i" }} — {{ h.new_status }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+{% endblock %}
