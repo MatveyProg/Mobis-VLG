@@ -18,8 +18,10 @@
   </div>
   <div class="col-lg-6">
     <div class="text-muted">{{ product.sku }} · {{ product.category }} · {{ product.get_condition_display }}</div>
-    <h1 class="h2 mt-2">{{ product.name_ru }}</h1>
-    {% if product.name_en %}<div class="text-muted mb-2">{{ product.name_en }}</div>{% endif %}
+    <h1 class="h2 mt-2">{{ product.display_name }}</h1>
+    {% if product.name_ru and product.name_en %}
+      <div class="text-muted mb-2">{{ product.name_en }}</div>
+    {% endif %}
     <div class="price mb-3">{{ product.price_rub }} ₽</div>
     <p>
       {% if product.stock.quantity_available > 0 %}

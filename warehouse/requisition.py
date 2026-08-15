@@ -41,8 +41,8 @@ def build_requisition_from_sales(*, date_from, date_to, user=None) -> PurchaseRe
             line_number=i,
             product=product,
             quantity=row['qty'],
-            purchase_price_krw=product.price_krw,
-            purchase_price_rub=product.price_rub,
+            purchase_price_krw=product.purchase_price_krw,
+            purchase_price_rub=product.purchase_price_rub,
         )
     return requisition
 

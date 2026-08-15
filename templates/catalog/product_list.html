@@ -7,7 +7,7 @@
       <h2 class="h5 mb-3">Фильтры</h2>
       <div class="mb-3">
         <label class="form-label">Поиск</label>
-        <input type="text" name="q" value="{{ filters.q }}" class="form-control" placeholder="Артикул / кросс">
+        <input type="text" name="q" value="{{ filters.q }}" class="form-control" placeholder="Артикул, название, кросс">
       </div>
       <div class="mb-3">
         <label class="form-label">Категория</label>
@@ -82,7 +82,7 @@
               {% endwith %}
               <div class="p-3">
                 <div class="text-muted small">{{ product.sku }} · {{ product.get_condition_display }}</div>
-                <h2 class="h6 mt-1">{{ product.name_ru }}</h2>
+                <h2 class="h6 mt-1">{{ product.display_name }}</h2>
                 <div class="d-flex justify-content-between align-items-center mt-2">
                   <span class="price">{{ product.price_rub }} ₽</span>
                   {% if product.stock.quantity_available > 0 %}

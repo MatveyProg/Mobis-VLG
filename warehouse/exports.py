@@ -1,13 +1,14 @@
 from decimal import Decimal
 
 from django.http import HttpResponse
-from openpyxl import Workbook
-from openpyxl.styles import Font
 
 from warehouse.models import PurchaseRequisition
 
 
 def export_requisition_xlsx(requisition: PurchaseRequisition) -> HttpResponse:
+    from openpyxl import Workbook
+    from openpyxl.styles import Font
+
     wb = Workbook()
     ws = wb.active
     ws.title = 'Заявка'

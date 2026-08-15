@@ -5,6 +5,7 @@
   <h1 class="h3 mb-0">Приходы на склад</h1>
   <div class="d-flex gap-2">
     <a href="{% url 'warehouse:stock_in_create' %}" class="btn btn-accent btn-sm">+ Новый приход</a>
+    <a href="{% url 'warehouse:stock_in_import' %}" class="btn btn-outline-secondary btn-sm">Из Excel</a>
     <a href="{% url 'warehouse:requisition_list' %}" class="btn btn-outline-secondary btn-sm">Заявки</a>
   </div>
 </div>

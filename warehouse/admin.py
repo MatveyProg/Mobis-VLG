@@ -31,7 +31,7 @@ class StockAdmin(admin.ModelAdmin):
         'quantity_reserved',
         'available',
     )
-    search_fields = ('product__sku', 'product__name_ru')
+    search_fields = ('product__sku', 'product__name_ru', 'product__name_en')
     readonly_fields = ('product', 'quantity_on_hand', 'quantity_reserved')
 
     @admin.display(description='Доступно')

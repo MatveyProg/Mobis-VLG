@@ -23,6 +23,7 @@ urlpatterns = [
     # Приходы
     path('stock-in/', views.stock_in_list, name='stock_in_list'),
     path('stock-in/new/', views.stock_in_create, name='stock_in_create'),
+    path('stock-in/import/', views.stock_in_import, name='stock_in_import'),
     path('stock-in/<int:pk>/', views.stock_in_detail, name='stock_in_detail'),
     path('stock-in/<int:pk>/items/add/', views.stock_in_add_item, name='stock_in_add_item'),
     path(
@@ -30,5 +31,6 @@ urlpatterns = [
         views.stock_in_delete_item,
         name='stock_in_delete_item',
     ),
+    path('stock-in/<int:pk>/import/', views.stock_in_import_items, name='stock_in_import_items'),
     path('stock-in/<int:pk>/post/', views.stock_in_post, name='stock_in_post'),
 ]

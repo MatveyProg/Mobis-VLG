@@ -1,5 +1,10 @@
 from django.contrib import admin, messages
+from django.shortcuts import redirect, render
+from django.urls import path, reverse
 from django.utils.html import format_html
+
+from catalog.forms import ProductImportForm
+from catalog.import_products import import_products_from_xlsx
 
 from .models import (
     CarMake,
@@ -78,16 +83,86 @@ class ProductAdmin(admin.ModelAdmin):
         'category',
         'condition',
         'price_rub',
-        'price_krw',
+        'purchase_price_krw',
+        'purchase_price_rub',
+        'weight',
+        'quantity_in_car',
         'stock_available',
         'is_active',
-        'created_at',
     )
     list_filter = ('is_active', 'condition', 'category', StockAvailableFilter)
-    search_fields = ('sku', 'name_ru', 'name_en', 'sku_normalized', 'cross_numbers__number')
+    search_fields = ('sku', 'name_ru', 'name_en', 'sku_normalized', 'search_text', 'cross_numbers__number')
     inlines = [ProductImageInline, ProductCrossNumberInline, ProductVehicleInline]
     autocomplete_fields = ('category',)
     readonly_fields = ('sku_normalized', 'created_at')
+    fieldsets = (
+        (None, {
+            'fields': (
+                'sku', 'name_ru', 'name_en', 'category', 'condition', 'is_active',
+            ),
+        }),
+        ('Цены', {
+            'fields': (
+                'price_rub',
+                ('purchase_price_krw', 'purchase_price_rub'),
+            ),
+        }),
+        ('Характеристики', {
+            'fields': ('weight', 'quantity_in_car', 'description_ru'),
+        }),
+        ('Служебные', {
+            'fields': ('sku_normalized', 'created_at'),
+            'classes': ('collapse',),
+        }),
+    )
+    change_list_template = 'admin/catalog/product/change_list.html'
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path(
+                'import-xlsx/',
+                self.admin_site.admin_view(self.import_xlsx_view),
+                name='catalog_product_import_xlsx',
+            ),
+        ]
+        return custom + urls
+
+    def import_xlsx_view(self, request):
+        form = ProductImportForm(request.POST or None, request.FILES or None)
+        if request.method == 'POST' and form.is_valid():
+            try:
+                result = import_products_from_xlsx(form.cleaned_data['file'])
+            except ValueError as exc:
+                messages.error(request, str(exc))
+                return redirect('admin:catalog_product_import_xlsx')
+
+            msg = (
+                f'Импорт завершён: создано {result["created"]}, '
+                f'обновлено {result["updated"]}, пропущено {result["skipped"]}.'
+            )
+            if result['errors']:
+                messages.warning(request, msg)
+                for err in result['errors'][:20]:
+                    messages.error(request, err)
+                if len(result['errors']) > 20:
+                    messages.error(request, f'…и ещё {len(result["errors"]) - 20} ошибок.')
+            else:
+                messages.success(request, msg)
+            return redirect('admin:catalog_product_changelist')
+
+        context = {
+            **self.admin_site.each_context(request),
+            'form': form,
+            'title': 'Импорт товаров из Excel',
+            'opts': self.model._meta,
+            'expected_columns': [
+                'Артикул', 'Наименование (рус)', 'Наименование (англ)', 'Категория',
+                'Состояние', 'Цена продажи, ₽', 'Цена закупки, ₩', 'Цена закупки, ₽',
+                'Вес', 'Количество в машине', 'Описание',
+            ],
+        }
+        return render(request, 'admin/catalog/product/import_form.html', context)
 
     @admin.display(description='Доступно')
     def stock_available(self, obj):

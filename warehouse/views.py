@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Max
 from django.shortcuts import get_object_or_404, redirect, render
@@ -8,10 +9,12 @@ from django.views.decorators.http import require_POST
 
 from catalog.models import Product
 from warehouse.forms import (
+    ExcelFileForm,
     RequisitionFromSalesForm,
     RequisitionHeaderForm,
     RequisitionItemForm,
     StockInHeaderForm,
+    StockInImportForm,
     StockInItemForm,
 )
 from warehouse.models import (
@@ -27,6 +30,7 @@ from warehouse.requisition import (
     set_requisition_status,
 )
 from warehouse.exports import export_requisition_xlsx
+from warehouse.import_stock_in import import_stock_in_items_from_xlsx
 from warehouse.services import StockError, post_stock_in
 from warehouse.utils import get_product_by_sku
 
@@ -55,6 +59,8 @@ def stock_balances(request):
             Q(sku__icontains=q)
             | Q(sku_normalized__icontains=norm)
             | Q(name_ru__icontains=q)
+            | Q(name_en__icontains=q)
+            | Q(search_text__icontains=q.casefold())
         )
     only_positive = request.GET.get('positive') == '1'
     rows = []
@@ -209,8 +215,8 @@ def requisition_add_item(request, pk):
         line_number=max_line + 1,
         product=product,
         quantity=form.cleaned_data['quantity'],
-        purchase_price_rub=product.price_rub,
-        purchase_price_krw=product.price_krw,
+        purchase_price_rub=product.purchase_price_rub,
+        purchase_price_krw=product.purchase_price_krw,
     )
     messages.success(request, f'Добавлен {product.sku}.')
     return redirect('warehouse:requisition_detail', pk=pk)
@@ -364,6 +370,7 @@ def stock_in_detail(request, pk):
         'stock_in': stock_in,
         'item_form': item_form,
         'header_form': header_form,
+        'import_form': ExcelFileForm(),
         'editable': not stock_in.is_posted,
     })
 
@@ -393,6 +400,63 @@ def stock_in_add_item(request, pk):
     )
     messages.success(request, f'Добавлен {product.sku}.')
     return redirect('warehouse:stock_in_detail', pk=pk)
+
+
+@login_required
+@user_passes_test(staff_required)
+def stock_in_import(request):
+    form = StockInImportForm(request.POST or None, request.FILES or None)
+    if request.method == 'POST' and form.is_valid():
+        stock_in = StockIn.objects.create(
+            supplier=form.cleaned_data['supplier'],
+            requisition=form.cleaned_data.get('requisition'),
+            created_by=request.user,
+            date=timezone.now(),
+            is_posted=False,
+        )
+        try:
+            result = import_stock_in_items_from_xlsx(stock_in, form.cleaned_data['file'])
+        except (ValidationError, ValueError) as exc:
+            stock_in.delete()
+            messages.error(request, str(exc))
+            return render(request, 'warehouse/stock_in_import.html', {'form': form})
+        _report_import_result(request, result)
+        return redirect('warehouse:stock_in_detail', pk=stock_in.pk)
+    return render(request, 'warehouse/stock_in_import.html', {'form': form})
+
+
+@login_required
+@user_passes_test(staff_required)
+@require_POST
+def stock_in_import_items(request, pk):
+    stock_in = get_object_or_404(StockIn, pk=pk)
+    if stock_in.is_posted:
+        messages.error(request, 'Проведённый документ нельзя изменять.')
+        return redirect('warehouse:stock_in_detail', pk=pk)
+    form = ExcelFileForm(request.POST, request.FILES)
+    if not form.is_valid():
+        messages.error(request, 'Выберите файл .xlsx.')
+        return redirect('warehouse:stock_in_detail', pk=pk)
+    try:
+        result = import_stock_in_items_from_xlsx(stock_in, form.cleaned_data['file'])
+    except (ValidationError, ValueError) as exc:
+        messages.error(request, str(exc))
+        return redirect('warehouse:stock_in_detail', pk=pk)
+    _report_import_result(request, result)
+    return redirect('warehouse:stock_in_detail', pk=pk)
+
+
+def _report_import_result(request, result):
+    msg = f'Из Excel добавлено строк: {result["created"]}, пропущено: {result["skipped"]}.'
+    if result['errors']:
+        messages.warning(request, msg)
+        for err in result['errors'][:20]:
+            messages.error(request, err)
+        extra = len(result['errors']) - 20
+        if extra > 0:
+            messages.error(request, f'…и ещё {extra} ошибок.')
+    else:
+        messages.success(request, msg)
 
 
 @login_required

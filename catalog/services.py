@@ -15,8 +15,10 @@ def filter_products(queryset=None, *, q='', category=None, condition='', make_id
 
     if q:
         norm = normalize_code(q)
+        q_fold = q.casefold()
         qs = qs.filter(
-            Q(name_ru__icontains=q)
+            Q(search_text__icontains=q_fold)
+            | Q(name_ru__icontains=q)
             | Q(name_en__icontains=q)
             | Q(sku__icontains=q)
             | Q(sku_normalized__icontains=norm)

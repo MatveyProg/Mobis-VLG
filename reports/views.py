@@ -6,11 +6,15 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
-from openpyxl import Workbook
 
 from catalog.models import Product
 from orders.models import Order, OrderItem
 from warehouse.models import StockInItem, StockMovement
+
+
+def _workbook():
+    from openpyxl import Workbook
+    return Workbook()
 
 
 def _parse_dates(request):
@@ -54,7 +58,7 @@ def report_stock_in(request):
         qs = qs.filter(stock_in__supplier_id=supplier_id)
 
     if request.GET.get('export') == 'xlsx':
-        wb = Workbook()
+        wb = _workbook()
         ws = wb.active
         ws.title = 'Приход'
         ws.append(['Дата', 'Поставщик', 'Артикул', 'Наименование', 'Кол-во', 'Цена закупки ₽', 'Сумма ₽'])
@@ -96,7 +100,7 @@ def report_stock_out(request):
         qs = qs.filter(order__status_changed_at__lte=end)
 
     if request.GET.get('export') == 'xlsx':
-        wb = Workbook()
+        wb = _workbook()
         ws = wb.active
         ws.title = 'Расход'
         ws.append(['Дата', '№ заказа', 'Клиент', 'Артикул', 'Наименование', 'Кол-во', 'Цена ₽', 'Сумма ₽'])
@@ -158,7 +162,7 @@ def report_balances(request):
         })
 
     if request.GET.get('export') == 'xlsx':
-        wb = Workbook()
+        wb = _workbook()
         ws = wb.active
         ws.title = 'Остатки'
         ws.append([
@@ -216,7 +220,7 @@ def report_movement(request):
             })
 
     if request.GET.get('export') == 'xlsx':
-        wb = Workbook()
+        wb = _workbook()
         ws = wb.active
         ws.title = 'Движение'
         ws.append(['Артикул', 'Наименование', 'Начало', 'Приход', 'Расход', 'Сторно', 'Конец', 'Резерв'])

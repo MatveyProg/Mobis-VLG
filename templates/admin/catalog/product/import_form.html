@@ -1,0 +1,22 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h1>{{ title }}</h1>
+<p>Первая строка файла — заголовки (не импортируется). Данные — со второй строки.</p>
+<p>Ожидаемые столбцы (достаточно части из них, <strong>Артикул</strong> обязателен):</p>
+<ul>
+  {% for col in expected_columns %}
+    <li>{{ col }}</li>
+  {% endfor %}
+</ul>
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <p>
+    <label for="id_file">{{ form.file.label }}</label><br>
+    {{ form.file }}
+    {% if form.file.errors %}<span class="errornote">{{ form.file.errors }}</span>{% endif %}
+    {% if form.file.help_text %}<br><span class="help">{{ form.file.help_text }}</span>{% endif %}
+  </p>
+  <input type="submit" value="Загрузить" class="default">
+  <a href="{% url 'admin:catalog_product_changelist' %}">Отмена</a>
+</form>
+{% endblock %}

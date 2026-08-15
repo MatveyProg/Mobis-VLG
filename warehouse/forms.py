@@ -112,3 +112,39 @@ class StockInItemForm(forms.Form):
         decimal_places=2,
         widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
     )
+
+
+class ExcelFileForm(forms.Form):
+    file = forms.FileField(
+        label='Файл Excel (.xlsx)',
+        widget=forms.ClearableFileInput(attrs={'accept': '.xlsx', 'class': 'form-control'}),
+    )
+
+    def clean_file(self):
+        uploaded = self.cleaned_data['file']
+        if not uploaded.name.lower().endswith('.xlsx'):
+            raise forms.ValidationError('Допустим только формат .xlsx')
+        if uploaded.size > 10 * 1024 * 1024:
+            raise forms.ValidationError('Файл слишком большой (макс. 10 МБ).')
+        return uploaded
+
+
+class StockInImportForm(ExcelFileForm):
+    supplier = forms.ModelChoiceField(
+        label='Поставщик',
+        queryset=Supplier.objects.none(),
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+    requisition = forms.ModelChoiceField(
+        label='Заявка',
+        queryset=PurchaseRequisition.objects.none(),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['supplier'].queryset = Supplier.objects.order_by('name')
+        self.fields['requisition'].queryset = PurchaseRequisition.objects.order_by('-created_at')
+        self.fields['requisition'].empty_label = '— без заявки —'
+        self.order_fields(['supplier', 'requisition', 'file'])

@@ -88,6 +88,22 @@
 </div>
 
 {% if editable %}
+<div class="filters-panel mb-4">
+  <h3 class="h6">Загрузить из Excel</h3>
+  <p class="small text-muted mb-2">
+    Столбцы: артикул | количество | цена закупки ₽. Первая строка-заголовок пропускается.
+  </p>
+  <form method="post" action="{% url 'warehouse:stock_in_import_items' stock_in.pk %}" enctype="multipart/form-data" class="row g-2 align-items-end">
+    {% csrf_token %}
+    <div class="col-md-6">
+      {{ import_form.file }}
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-outline-secondary">Загрузить файл</button>
+    </div>
+  </form>
+</div>
+
 <div class="filters-panel">
   <h3 class="h6">Добавить строку</h3>
   <form method="post" action="{% url 'warehouse:stock_in_add_item' stock_in.pk %}" class="row g-2 align-items-end">

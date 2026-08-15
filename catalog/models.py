@@ -100,7 +100,7 @@ class Product(models.Model):
         editable=False,
         blank=True,
     )
-    name_ru = models.CharField('Наименование (рус)', max_length=255)
+    name_ru = models.CharField('Наименование (рус)', max_length=255, blank=True)
     name_en = models.CharField('Наименование (англ)', max_length=255, blank=True)
     category = models.ForeignKey(
         Category,
@@ -115,13 +115,36 @@ class Product(models.Model):
         default=Condition.NEW,
     )
     price_rub = models.DecimalField('Цена продажи, ₽', max_digits=12, decimal_places=2)
-    price_krw = models.DecimalField(
-        'Цена продажи, ₩',
+    purchase_price_krw = models.DecimalField(
+        'Цена закупки, ₩',
         max_digits=14,
         decimal_places=2,
         default=0,
     )
+    purchase_price_rub = models.DecimalField(
+        'Цена закупки, ₽',
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+    )
+    weight = models.DecimalField(
+        'Вес, кг',
+        max_digits=10,
+        decimal_places=3,
+        null=True,
+        blank=True,
+    )
+    quantity_in_car = models.PositiveIntegerField(
+        'Количество в машине',
+        default=1,
+    )
     description_ru = models.TextField('Описание (рус)', blank=True)
+    search_text = models.TextField(
+        'Строка поиска',
+        editable=False,
+        blank=True,
+        db_index=False,
+    )
     is_active = models.BooleanField('Активен', default=True)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
 
@@ -131,14 +154,28 @@ class Product(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f'{self.sku} — {self.name_ru}'
+        return f'{self.sku} — {self.display_name}'
 
     def save(self, *args, **kwargs):
         self.sku_normalized = normalize_code(self.sku)
+        self.search_text = ' '.join(
+            part for part in (
+                self.sku,
+                self.sku_normalized,
+                self.name_ru,
+                self.name_en,
+                self.description_ru,
+            )
+            if part
+        ).casefold()
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse('catalog:product_detail', kwargs={'pk': self.pk})
+
+    @property
+    def display_name(self):
+        return self.name_ru or self.name_en or self.sku
 
     @property
     def unit(self):
