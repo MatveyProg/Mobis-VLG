@@ -15,17 +15,21 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-insecure-change-me')
 DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('1', 'true', 'yes')
 
-# VPS: 91.239.207.224. Домен добавьте в DJANGO_ALLOWED_HOSTS в .env
-_DEFAULT_ALLOWED_HOSTS = '91.239.207.224,localhost,127.0.0.1,testserver'
+# VPS: внешний 91.239.206.123, клон 91.239.207.224. Домен — в .env
+_DEFAULT_ALLOWED_HOSTS = (
+    '91.239.206.123,91.239.207.224,192.168.4.101,localhost,127.0.0.1,testserver'
+)
 ALLOWED_HOSTS = [
     h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', _DEFAULT_ALLOWED_HOSTS).split(',') if h.strip()
 ]
-if '91.239.207.224' not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append('91.239.207.224')
+for _host in ('91.239.206.123', '91.239.207.224', '192.168.4.101'):
+    if _host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_host)
 
 CSRF_TRUSTED_ORIGINS = [
     o.strip() for o in os.getenv(
         'DJANGO_CSRF_TRUSTED_ORIGINS',
+        'http://91.239.206.123,https://91.239.206.123,'
         'http://91.239.207.224,https://91.239.207.224',
     ).split(',') if o.strip()
 ]

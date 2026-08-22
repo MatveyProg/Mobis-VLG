@@ -12,6 +12,25 @@ class ProductListView(ListView):
     context_object_name = 'products'
     paginate_by = settings.PRODUCTS_PER_PAGE
 
+    def get_paginate_by(self, queryset):
+        if self._should_group_by_category():
+            return None
+        return self.paginate_by
+
+    def _should_group_by_category(self):
+        params = self.request.GET
+        return (
+            not params.get('q', '').strip()
+            and not params.get('category')
+        )
+
+    def _build_category_groups(self, queryset):
+        grouped = {}
+        for product in queryset:
+            grouped.setdefault(product.category, []).append(product)
+        categories = sorted(grouped.keys(), key=lambda c: (c.sort_order, c.name))
+        return [(category, grouped[category]) for category in categories]
+
     def get_queryset(self):
         category = None
         category_slug = self.request.GET.get('category')
@@ -43,6 +62,9 @@ class ProductListView(ListView):
             'in_stock': self.request.GET.get('in_stock', ''),
             'sort': self.request.GET.get('sort', '-created_at'),
         }
+        ctx['group_by_category'] = self._should_group_by_category()
+        if ctx['group_by_category']:
+            ctx['category_groups'] = self._build_category_groups(self.get_queryset())
         return ctx
 
 

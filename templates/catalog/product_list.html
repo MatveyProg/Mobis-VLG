@@ -4,7 +4,13 @@
 <div class="d-flex d-lg-none justify-content-between align-items-center gap-2 mb-3">
   <div>
     <h1 class="h4 mb-0">Каталог</h1>
-    <span class="text-muted small">Найдено: {{ paginator.count }}</span>
+    <span class="text-muted small">
+      {% if group_by_category %}
+        {{ category_groups|length }} категор{{ category_groups|length|pluralize:"ия,ии,ий" }}
+      {% else %}
+        Найдено: {{ paginator.count }}
+      {% endif %}
+    </span>
   </div>
   <button class="btn btn-outline-secondary" type="button" data-bs-toggle="offcanvas" data-bs-target="#filtersPanel">
     <i class="bi bi-funnel"></i> Фильтры
@@ -27,31 +33,64 @@
   <section class="col-lg-9">
     <div class="d-none d-lg-flex justify-content-between align-items-end mb-3">
       <h1 class="h3 mb-0">Каталог автозапчастей</h1>
-      <span class="text-muted">Найдено: {{ paginator.count }}</span>
+      <span class="text-muted">
+        {% if group_by_category %}
+          {{ category_groups|length }} категор{{ category_groups|length|pluralize:"ия,ии,ий" }}
+        {% else %}
+          Найдено: {{ paginator.count }}
+        {% endif %}
+      </span>
     </div>
-    <div class="row g-3">
-      {% for product in products %}
-        {% include "catalog/_product_card.html" %}
-      {% empty %}
-        <div class="col-12">
+
+    {% if group_by_category %}
+      {% if category_groups %}
+        {% for category, cat_products in category_groups %}
+          <section class="catalog-category-block" id="cat-{{ category.slug }}">
+            <header class="catalog-category-head">
+              <div>
+                <h2 class="catalog-category-title">{{ category.name }}</h2>
+                <span class="catalog-category-count">{{ cat_products|length }} поз.</span>
+              </div>
+              <a class="catalog-category-link" href="?category={{ category.slug }}">Только эта категория</a>
+            </header>
+            <div class="row g-3">
+              {% for product in cat_products %}
+                {% include "catalog/_product_card.html" %}
+              {% endfor %}
+            </div>
+          </section>
+        {% endfor %}
+      {% else %}
+        <div class="catalog-empty">
           <p class="text-muted mb-2">Товары не найдены.</p>
           <a class="btn btn-accent" href="{% url 'catalog:product_list' %}">Сбросить фильтры</a>
         </div>
-      {% endfor %}
-    </div>
+      {% endif %}
+    {% else %}
+      <div class="row g-3">
+        {% for product in products %}
+          {% include "catalog/_product_card.html" %}
+        {% empty %}
+          <div class="col-12">
+            <p class="text-muted mb-2">Товары не найдены.</p>
+            <a class="btn btn-accent" href="{% url 'catalog:product_list' %}">Сбросить фильтры</a>
+          </div>
+        {% endfor %}
+      </div>
 
-    {% if page_obj.has_other_pages %}
-      <nav class="mt-4">
-        <ul class="pagination">
-          {% if page_obj.has_previous %}
-            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">Назад</a></li>
-          {% endif %}
-          <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
-          {% if page_obj.has_next %}
-            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">Вперёд</a></li>
-          {% endif %}
-        </ul>
-      </nav>
+      {% if page_obj.has_other_pages %}
+        <nav class="mt-4">
+          <ul class="pagination">
+            {% if page_obj.has_previous %}
+              <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">Назад</a></li>
+            {% endif %}
+            <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+            {% if page_obj.has_next %}
+              <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">Вперёд</a></li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
     {% endif %}
   </section>
 </div>
