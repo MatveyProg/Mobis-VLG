@@ -13,20 +13,30 @@ except ImportError:
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-insecure-change-me')
-DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
+DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('1', 'true', 'yes')
+
+# VPS: 91.239.206.123. Домен добавьте в DJANGO_ALLOWED_HOSTS в .env
+_DEFAULT_ALLOWED_HOSTS = '91.239.206.123,localhost,127.0.0.1,testserver'
 ALLOWED_HOSTS = [
-    h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver').split(',') if h.strip()
+    h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', _DEFAULT_ALLOWED_HOSTS).split(',') if h.strip()
 ]
-# Поддомены туннеля tuna.am (например zkdjsa-....ru.tuna.am)
-if '.ru.tuna.am' not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append('.ru.tuna.am')
+if '91.239.206.123' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('91.239.206.123')
 
 CSRF_TRUSTED_ORIGINS = [
     o.strip() for o in os.getenv(
         'DJANGO_CSRF_TRUSTED_ORIGINS',
-        'http://*.ru.tuna.am,https://*.ru.tuna.am',
+        'http://91.239.206.123,https://91.239.206.123',
     ).split(',') if o.strip()
 ]
+
+# Nginx проксирует HTTPS → gunicorn. Не форсируем HTTPS-cookie:
+# сайт ещё может открываться по http://IP/
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+if not DEBUG and SECRET_KEY in ('dev-insecure-change-me', 'change-me-in-production'):
+    raise ValueError('Задайте DJANGO_SECRET_KEY в .env на продакшене')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -105,6 +115,7 @@ TIME_ZONE = 'Europe/Volgograd'
 USE_I18N = True
 USE_TZ = True
 
+# collectstatic складывает файлы сюда; nginx отдаёт /static/ из этой папки
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
@@ -146,4 +157,27 @@ MESSAGE_TAGS = {
     message_constants.SUCCESS: 'success',
     message_constants.WARNING: 'warning',
     message_constants.ERROR: 'danger',
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler'},
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'django.log',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console', 'file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
 }
