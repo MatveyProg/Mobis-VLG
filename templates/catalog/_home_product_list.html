@@ -1,0 +1,29 @@
+{% load static %}
+<article class="product-list__item">
+  <a href="{{ product.get_absolute_url }}" class="product-list__image">
+    {% with img=product.images.first %}
+      {% if img %}
+        <img src="{{ img.image.url }}" alt="{{ product.display_name }}" width="100" height="100">
+      {% else %}
+        <img src="{% static 'img/products/brake-pads.svg' %}" alt="" width="100" height="100">
+      {% endif %}
+    {% endwith %}
+  </a>
+  <div class="product-list__content">
+    <h3 class="product-list__title">
+      <a href="{{ product.get_absolute_url }}">{{ product.display_name }}</a>
+    </h3>
+    <div class="product-list__meta">
+      <span>Артикул: <span>{{ product.sku }}</span></span>
+      <span>{{ product.get_condition_display }}</span>
+    </div>
+    <div class="product-list__stock">
+      <span class="product-list__stock-dot"></span>
+      В наличии, {{ product.stock.quantity_available }} шт.
+    </div>
+    <div class="product-list__footer">
+      <span class="product-list__price">{{ product.price_rub }} ₽</span>
+      <a href="{{ product.get_absolute_url }}" class="product-list__add" aria-label="Открыть товар">+</a>
+    </div>
+  </div>
+</article>

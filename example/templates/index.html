@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="APEX AUTO — премиальные автозапчасти для вашего авто">
+  <title>APEX AUTO / AUTOPARTS — Автозапчасти</title>
+
+  {# Django: {% load static %} #}
+  {# Django: <link rel="stylesheet" href="{% static 'css/variables.css' %}"> #}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../static/css/variables.css">
+  <link rel="stylesheet" href="../static/css/style.css">
+</head>
+<body>
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="header">
+    <div class="container header__inner">
+
+      <!-- Mobile menu button -->
+      <button class="header__menu-btn" id="menuBtn" aria-label="Открыть меню">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+
+      <!-- Logo -->
+      <a href="/" class="header__logo">
+        <span class="header__logo-icon" aria-hidden="true">A</span>
+        <span class="header__logo-main">APEX <span>AUTO</span></span>
+        <span class="header__logo-divider">/</span>
+        <span class="header__logo-sub">AUTOPARTS</span>
+      </a>
+
+      <!-- Desktop: Catalog button -->
+      <a href="#catalog" class="btn btn--accent header__catalog">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+        Каталог
+      </a>
+
+      <!-- Desktop: Search -->
+      <div class="header__search-group">
+        <div class="header__search">
+          <span class="header__search-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+          <input type="search" class="header__search-input" placeholder="Поиск по марке, артикулу или VIN" aria-label="Поиск">
+        </div>
+        <div class="header__search-vin">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>
+          </svg>
+          VIN
+        </div>
+      </div>
+
+      <!-- Desktop: Garage -->
+      <button class="header__garage" type="button">
+        <div class="header__garage-thumb">
+          <svg width="20" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+        </div>
+        <div class="header__garage-info">
+          <div class="header__garage-title">BMW 3 G20 2.0d</div>
+          <div class="header__garage-sub">В вашем гараже</div>
+        </div>
+      </button>
+
+      <!-- Desktop: Nav links -->
+      <nav class="header__nav-links" aria-label="Пользовательское меню">
+        <a href="#favorites" class="header__nav-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          Избранное
+        </a>
+        <a href="#orders" class="header__nav-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Заказы
+        </a>
+        <a href="#cart" class="header__nav-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          Корзина
+          <span class="header__badge" data-cart-count>3</span>
+        </a>
+      </nav>
+
+      <!-- Mobile: Actions -->
+      <div class="header__actions">
+        <a href="#notifications" class="header__action" aria-label="Уведомления">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span class="header__badge">3</span>
+        </a>
+        <a href="#cart" class="header__action" aria-label="Корзина">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          <span class="header__badge" data-cart-count>2</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== MOBILE SIDEBAR ===================== -->
+  <aside class="sidebar" id="sidebar" aria-hidden="true">
+    <div class="sidebar__overlay" id="sidebarOverlay"></div>
+    <div class="sidebar__panel">
+      <button class="sidebar__close" id="sidebarClose" aria-label="Закрыть меню">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+      <nav class="sidebar__nav">
+        <a href="/">Главная</a>
+        <a href="#catalog">Каталог</a>
+        <a href="#garage">Мой гараж</a>
+        <a href="#favorites">Избранное</a>
+        <a href="#orders">Заказы</a>
+        <a href="#cart">Корзина</a>
+        <a href="#profile">Профиль</a>
+      </nav>
+    </div>
+  </aside>
+
+  <main>
+    <!-- ===================== MOBILE SEARCH BAR ===================== -->
+    <section class="search-bar">
+      <div class="container">
+        <button class="search-bar__garage" type="button">
+          <span class="search-bar__garage-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+          </span>
+          <span class="search-bar__garage-text">BMW 320d (G20)</span>
+          <span class="search-bar__garage-chevron">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </span>
+        </button>
+        <form class="search-bar__form" action="#catalog" method="get" role="search">
+          <span class="search-bar__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+          <input type="search" class="search-bar__input" name="q" placeholder="Поиск запчасти или VIN" aria-label="Поиск запчасти или VIN">
+          <button type="button" class="search-bar__scan" aria-label="Сканировать VIN">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ===================== HERO (Desktop) ===================== -->
+    <section class="hero">
+      <div class="container">
+        <div class="hero__grid">
+          <div class="hero__content">
+            <h1 class="hero__title">Премиальные автозапчасти для вашего авто</h1>
+            <p class="hero__text">Оригинальные и качественные аналоги с гарантией совместимости. Быстрая доставка по всей России.</p>
+            <div class="hero__features">
+              <div class="hero__feature">
+                <span class="hero__feature-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </span>
+                Гарантия качества
+              </div>
+              <div class="hero__feature">
+                <span class="hero__feature-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+                100% совместимость
+              </div>
+              <div class="hero__feature">
+                <span class="hero__feature-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                </span>
+                Быстрая доставка
+              </div>
+            </div>
+          </div>
+
+          <div class="hero__visual">
+            <div class="hero__visual-glow" aria-hidden="true"></div>
+            <div class="hero__visual-parts">
+              <div class="hero__part hero__part--disc">
+                <img src="../static/img/parts/brake-disc.svg" alt="Тормозной диск" width="180" height="180">
+              </div>
+              <div class="hero__part hero__part--turbo">
+                <img src="../static/img/parts/turbo.svg" alt="Турбина" width="160" height="160">
+              </div>
+              <div class="hero__part hero__part--light">
+                <img src="../static/img/parts/headlight.svg" alt="Фара" width="140" height="140">
+              </div>
+              <div class="hero__part hero__part--suspension">
+                <img src="../static/img/parts/suspension.svg" alt="Амортизатор" width="120" height="120">
+              </div>
+            </div>
+          </div>
+
+          <div class="hero__widget">
+            <div class="vehicle-picker">
+              <h2 class="vehicle-picker__title">Подбор запчастей по автомобилю</h2>
+              <form id="vehicleForm">
+                <div class="vehicle-picker__selects">
+                  <select class="vehicle-picker__select" name="make" required aria-label="Марка">
+                    <option value="">Марка</option>
+                    <option value="bmw" selected>BMW</option>
+                    <option value="audi">Audi</option>
+                    <option value="mercedes">Mercedes-Benz</option>
+                    <option value="volkswagen">Volkswagen</option>
+                  </select>
+                  <select class="vehicle-picker__select" name="model" required aria-label="Модель">
+                    <option value="">Модель</option>
+                    <option value="3-series" selected>3 Series</option>
+                    <option value="5-series">5 Series</option>
+                    <option value="x3">X3</option>
+                  </select>
+                  <select class="vehicle-picker__select" name="generation" aria-label="Поколение">
+                    <option value="">Поколение</option>
+                    <option value="g20" selected>G20 (2019–)</option>
+                    <option value="f30">F30 (2012–2019)</option>
+                  </select>
+                  <select class="vehicle-picker__select" name="engine" aria-label="Двигатель">
+                    <option value="">Двигатель</option>
+                    <option value="2.0d" selected>2.0d (190 л.с.)</option>
+                    <option value="2.0i">2.0i (184 л.с.)</option>
+                    <option value="3.0d">3.0d (265 л.с.)</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn--primary btn--lg btn--full">Найти запчасти</button>
+              </form>
+              <div class="vehicle-picker__divider">или</div>
+              <p class="vehicle-picker__vin-title">Быстрый поиск по VIN-коду</p>
+              <form id="vinForm" class="vehicle-picker__vin-row">
+                <input type="text" class="vehicle-picker__vin-input" name="vin" placeholder="WBA..." maxlength="17" aria-label="VIN-код">
+                <button type="submit" class="btn btn--accent">Проверить</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CATEGORIES ===================== -->
+    <section class="categories" id="catalog">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-header__title">Быстрые категории</h2>
+          <a href="#catalog" class="section-header__link">Все категории &gt;</a>
+        </div>
+
+        <!-- Mobile categories (2-col grid) -->
+        <div class="categories__grid categories__grid--mobile">
+          <a href="#category-filters" class="category-card">
+            <span class="category-card__name">ТО и фильтры</span>
+            <span class="category-card__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </span>
+            <div class="category-card__image">
+              <img src="../static/img/categories/filters.svg" alt="" width="70" height="70">
+            </div>
+          </a>
+          <a href="#category-brakes" class="category-card">
+            <span class="category-card__name">Тормоза</span>
+            <span class="category-card__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+            </span>
+            <div class="category-card__image">
+              <img src="../static/img/categories/brakes.svg" alt="" width="70" height="70">
+            </div>
+          </a>
+          <a href="#category-suspension" class="category-card">
+            <span class="category-card__name">Подвеска</span>
+            <span class="category-card__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"/></svg>
+            </span>
+            <div class="category-card__image">
+              <img src="../static/img/categories/suspension.svg" alt="" width="70" height="70">
+            </div>
+          </a>
+          <a href="#category-oils" class="category-card">
+            <span class="category-card__name">Масла</span>
+            <span class="category-card__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+            </span>
+            <div class="category-card__image">
+              <img src="../static/img/categories/oils.svg" alt="" width="70" height="70">
+            </div>
+          </a>
+        </div>
+
+        <!-- Desktop categories (6-col grid) -->
+        <div class="categories__grid categories__grid--desktop">
+          <a href="#category-brakes" class="category-card category-card--desktop">
+            <div class="category-card__content">
+              <span class="category-card__name">Тормозная система</span>
+              <span class="category-card__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 16 12 12 16 10"/></svg>
+              </span>
+            </div>
+            <div class="category-card__image">
+              <img src="../static/img/categories/brakes.svg" alt="" width="110" height="110">
+            </div>
+          </a>
+          <a href="#category-engine" class="category-card category-card--desktop">
+            <div class="category-card__content">
+              <span class="category-card__name">Двигатель и турбины</span>
+              <span class="category-card__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 16 12 12 16 10"/></svg>
+              </span>
+            </div>
+            <div class="category-card__image">
+              <img src="../static/img/categories/engine.svg" alt="" width="110" height="110">
+            </div>
+          </a>
+          <a href="#category-suspension" class="category-card category-card--desktop">
+            <div class="category-card__content">
+              <span class="category-card__name">Подвеска и рулевое</span>
+              <span class="category-card__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 16 12 12 16 10"/></svg>
+              </span>
+            </div>
+            <div class="category-card__image">
+              <img src="../static/img/categories/suspension.svg" alt="" width="110" height="110">
+            </div>
+          </a>
+          <a href="#category-filters" class="category-card category-card--desktop">
+            <div class="category-card__content">
+              <span class="category-card__name">Фильтры и масла</span>
+              <span class="category-card__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 16 12 12 16 10"/></svg>
+              </span>
+            </div>
+            <div class="category-card__image">
+              <img src="../static/img/categories/filters.svg" alt="" width="110" height="110">
+            </div>
+          </a>
+          <a href="#category-optics" class="category-card category-card--desktop">
+            <div class="category-card__content">
+              <span class="category-card__name">Оптика и кузов</span>
+              <span class="category-card__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 16 12 12 16 10"/></svg>
+              </span>
+            </div>
+            <div class="category-card__image">
+              <img src="../static/img/categories/optics.svg" alt="" width="110" height="110">
+            </div>
+          </a>
+          <a href="#category-electrical" class="category-card category-card--desktop">
+            <div class="category-card__content">
+              <span class="category-card__name">Электрика</span>
+              <span class="category-card__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 16 12 12 16 10"/></svg>
+              </span>
+            </div>
+            <div class="category-card__image">
+              <img src="../static/img/categories/electrical.svg" alt="" width="110" height="110">
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== PRODUCTS ===================== -->
+    <section class="products">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-header__title">Популярные товары</h2>
+          <a href="#catalog" class="section-header__link">Смотреть все &gt;</a>
+          <div class="section-header__nav">
+            <button class="section-header__arrow" id="carouselPrev" aria-label="Предыдущие товары">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button class="section-header__arrow" id="carouselNext" aria-label="Следующие товары">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mobile: vertical product list -->
+        <div class="product-list">
+          <article class="product-list__item">
+            <div class="product-list__image">
+              <img src="../static/img/products/brake-pads.svg" alt="Тормозные колодки Brembo" width="100" height="100">
+            </div>
+            <button class="product-list__favorite" data-favorite aria-label="Добавить в избранное">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </button>
+            <div class="product-list__content">
+              <h3 class="product-list__title">Тормозные колодки передние Brembo P 06 111</h3>
+              <div class="product-list__meta">
+                <span>Артикул: <span>P06111</span></span>
+                <span class="product-list__brand">Бренд: <span class="product-list__brand-logo">BREMBO</span></span>
+              </div>
+              <div class="product-list__stock">
+                <span class="product-list__stock-dot"></span>
+                В наличии, 24 шт.
+              </div>
+              <div class="product-list__footer">
+                <span class="product-list__price">6 890 ₽</span>
+                <button class="product-list__add" data-add-cart aria-label="Добавить в корзину">+</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="product-list__item">
+            <div class="product-list__image">
+              <img src="../static/img/products/brake-disc-product.svg" alt="Тормозной диск Brembo" width="100" height="100">
+            </div>
+            <button class="product-list__favorite" data-favorite aria-label="Добавить в избранное">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </button>
+            <div class="product-list__content">
+              <h3 class="product-list__title">Тормозной диск передний Brembo 09.A123.11</h3>
+              <div class="product-list__meta">
+                <span>Артикул: <span>09A12311</span></span>
+                <span class="product-list__brand">Бренд: <span class="product-list__brand-logo">BREMBO</span></span>
+              </div>
+              <div class="product-list__stock">
+                <span class="product-list__stock-dot"></span>
+                В наличии, 8 шт.
+              </div>
+              <div class="product-list__footer">
+                <span class="product-list__price">12 450 ₽</span>
+                <button class="product-list__add" data-add-cart aria-label="Добавить в корзину">+</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="product-list__item">
+            <div class="product-list__image">
+              <img src="../static/img/products/brake-fluid.svg" alt="Тормозная жидкость Liqui Moly" width="100" height="100">
+            </div>
+            <button class="product-list__favorite" data-favorite aria-label="Добавить в избранное">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </button>
+            <div class="product-list__content">
+              <h3 class="product-list__title">Тормозная жидкость Liqui Moly DOT 4, 1л</h3>
+              <div class="product-list__meta">
+                <span>Артикул: <span>2678</span></span>
+                <span class="product-list__brand">Бренд: <span class="product-list__brand-logo" style="color:#00529b">LIQUI MOLY</span></span>
+              </div>
+              <div class="product-list__stock">
+                <span class="product-list__stock-dot"></span>
+                В наличии, 56 шт.
+              </div>
+              <div class="product-list__footer">
+                <span class="product-list__price">890 ₽</span>
+                <button class="product-list__add" data-add-cart aria-label="Добавить в корзину">+</button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <!-- Desktop: horizontal carousel -->
+        <div class="product-carousel">
+          <div class="product-carousel__track" id="productCarousel">
+            <article class="product-card">
+              <div class="product-card__top">
+                <span class="product-card__brand product-card__brand--brembo">Brembo</span>
+                <button class="product-card__favorite" data-favorite aria-label="Избранное">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+              </div>
+              <div class="product-card__body">
+                <div class="product-card__image">
+                  <img src="../static/img/products/brake-disc-product.svg" alt="Тормозной диск передний" width="80" height="80">
+                </div>
+                <div class="product-card__info">
+                  <h3 class="product-card__title">Тормозной диск передний</h3>
+                  <p class="product-card__sku">09.A123.11</p>
+                  <span class="product-card__compat">✓ 100% совместимо</span>
+                  <p class="product-card__delivery">Завтра</p>
+                </div>
+              </div>
+              <div class="product-card__footer">
+                <span class="product-card__price">18 490 ₽</span>
+                <button class="btn btn--primary product-card__cart" data-add-cart>В корзину</button>
+              </div>
+            </article>
+
+            <article class="product-card">
+              <div class="product-card__top">
+                <span class="product-card__brand product-card__brand--brembo">Brembo</span>
+                <button class="product-card__favorite" data-favorite aria-label="Избранное">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+              </div>
+              <div class="product-card__body">
+                <div class="product-card__image">
+                  <img src="../static/img/products/brake-pads.svg" alt="Тормозные колодки передние" width="80" height="80">
+                </div>
+                <div class="product-card__info">
+                  <h3 class="product-card__title">Тормозные колодки передние</h3>
+                  <p class="product-card__sku">P 06 111</p>
+                  <span class="product-card__compat">✓ 100% совместимо</span>
+                  <p class="product-card__delivery">Завтра</p>
+                </div>
+              </div>
+              <div class="product-card__footer">
+                <span class="product-card__price">6 890 ₽</span>
+                <button class="btn btn--primary product-card__cart" data-add-cart>В корзину</button>
+              </div>
+            </article>
+
+            <article class="product-card">
+              <div class="product-card__top">
+                <span class="product-card__brand product-card__brand--bosch">Bosch</span>
+                <button class="product-card__favorite" data-favorite aria-label="Избранное">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+              </div>
+              <div class="product-card__body">
+                <div class="product-card__image">
+                  <img src="../static/img/categories/filters.svg" alt="Масляный фильтр" width="80" height="80">
+                </div>
+                <div class="product-card__info">
+                  <h3 class="product-card__title">Масляный фильтр</h3>
+                  <p class="product-card__sku">1 457 429 916</p>
+                  <span class="product-card__compat">✓ 100% совместимо</span>
+                  <p class="product-card__delivery">Завтра</p>
+                </div>
+              </div>
+              <div class="product-card__footer">
+                <span class="product-card__price">690 ₽</span>
+                <button class="btn btn--primary product-card__cart" data-add-cart>В корзину</button>
+              </div>
+            </article>
+
+            <article class="product-card">
+              <div class="product-card__top">
+                <span class="product-card__brand product-card__brand--mann">Mann-Filter</span>
+                <button class="product-card__favorite" data-favorite aria-label="Избранное">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+              </div>
+              <div class="product-card__body">
+                <div class="product-card__image">
+                  <img src="../static/img/categories/filters.svg" alt="Воздушный фильтр" width="80" height="80">
+                </div>
+                <div class="product-card__info">
+                  <h3 class="product-card__title">Воздушный фильтр</h3>
+                  <p class="product-card__sku">C 25 114</p>
+                  <span class="product-card__compat">✓ 100% совместимо</span>
+                  <p class="product-card__delivery">2–3 дня</p>
+                </div>
+              </div>
+              <div class="product-card__footer">
+                <span class="product-card__price">1 290 ₽</span>
+                <button class="btn btn--primary product-card__cart" data-add-cart>В корзину</button>
+              </div>
+            </article>
+
+            <article class="product-card">
+              <div class="product-card__top">
+                <span class="product-card__brand product-card__brand--liquimoly">Liqui Moly</span>
+                <button class="product-card__favorite" data-favorite aria-label="Избранное">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+              </div>
+              <div class="product-card__body">
+                <div class="product-card__image">
+                  <img src="../static/img/products/brake-fluid.svg" alt="Тормозная жидкость DOT 4" width="80" height="80">
+                </div>
+                <div class="product-card__info">
+                  <h3 class="product-card__title">Тормозная жидкость DOT 4</h3>
+                  <p class="product-card__sku">2678</p>
+                  <span class="product-card__compat">✓ 100% совместимо</span>
+                  <p class="product-card__delivery">Завтра</p>
+                </div>
+              </div>
+              <div class="product-card__footer">
+                <span class="product-card__price">890 ₽</span>
+                <button class="btn btn--primary product-card__cart" data-add-cart>В корзину</button>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================== FEATURES BAR (Desktop) ===================== -->
+  <footer class="features-bar">
+    <div class="container">
+      <div class="features-bar__grid">
+        <div class="features-bar__item">
+          <span class="features-bar__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Оригинальные запчасти и качественные аналоги
+        </div>
+        <div class="features-bar__item">
+          <span class="features-bar__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          </span>
+          Гарантия возврата 14 дней
+        </div>
+        <div class="features-bar__item">
+          <span class="features-bar__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          </span>
+          Быстрая доставка по России и СНГ
+        </div>
+        <div class="features-bar__item">
+          <span class="features-bar__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+          </span>
+          Поддержка 24/7
+        </div>
+        <div class="features-bar__item">
+          <span class="features-bar__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          Безопасная оплата и защита данных
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===================== BOTTOM NAV (Mobile) ===================== -->
+  <nav class="bottom-nav" aria-label="Мобильная навигация">
+    <a href="/" class="bottom-nav__item is-active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Главная
+    </a>
+    <a href="#catalog" class="bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Каталог
+    </a>
+    <a href="#garage" class="bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+      Мой гараж
+    </a>
+    <a href="#favorites" class="bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      Избранное
+    </a>
+    <a href="#profile" class="bottom-nav__item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Профиль
+    </a>
+  </nav>
+
+  {# Django: <script src="{% static 'js/main.js' %}"></script> #}
+  <script src="../static/js/main.js"></script>
+</body>
+</html>

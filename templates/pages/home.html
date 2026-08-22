@@ -1,82 +1,145 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{{ SHOP_NAME }} — автозапчасти{% endblock %}
+{% block bootstrap_head %}{% endblock %}
+{% block bootstrap_foot %}{% endblock %}
 {% block body_class %}page-home{% endblock %}
 {% block main_class %}{% endblock %}
 {% block messages_wrap %}container pt-3{% endblock %}
+
+{% block mobile_search %}
+<section class="search-bar">
+  <div class="container">
+    <form class="search-bar__form" action="{% url 'catalog:product_list' %}" method="get" role="search">
+      <span class="search-bar__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </span>
+      <input type="search" class="search-bar__input" name="q" placeholder="Поиск по артикулу, названию или кроссу" aria-label="Поиск">
+    </form>
+  </div>
+</section>
+{% endblock %}
+
 {% block content %}
 
-<section class="home-hero">
+<section class="hero">
   <div class="container">
-    <p class="home-kicker">Склад · Волгоград</p>
-    <h1 class="home-title">Запчасти, которые можно взять сегодня</h1>
-    <p class="home-lead">
-      Оригинал и контракт. Ищем по артикулу, названию и кросс-номерам.
-      Онлайн-оплаты нет — после заказа согласуем перевод и получение.
-    </p>
-    <div class="home-hero-actions">
-      <button class="btn btn-accent btn-lg" type="button" data-bs-toggle="modal" data-bs-target="#searchModal">
-        <i class="bi bi-search me-1"></i> Найти запчасть
-      </button>
-      <a class="btn btn-hero-ghost btn-lg" href="{% url 'catalog:product_list' %}">Каталог</a>
+    <div class="hero__grid">
+      <div class="hero__content">
+        <p class="hero__kicker">Склад · Волгоград</p>
+        <h1 class="hero__title">Запчасти, которые можно взять сегодня</h1>
+        <p class="hero__text">
+          Оригинал и контракт. Ищем по артикулу, названию и кросс-номерам.
+          Онлайн-оплаты нет — после заказа согласуем перевод и получение.
+        </p>
+        <div class="hero__features">
+          <div class="hero__feature">
+            <span class="hero__feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            </span>
+            {% if in_stock_count %}<strong>{{ in_stock_count }}</strong> в наличии{% else %}Реальные остатки{% endif %}
+          </div>
+          <div class="hero__feature">
+            <span class="hero__feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            Кросс-номера
+          </div>
+          <div class="hero__feature">
+            <span class="hero__feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </span>
+            Самовывоз и доставка
+          </div>
+        </div>
+      </div>
+
+      <div class="hero__visual">
+        <div class="hero__visual-glow" aria-hidden="true"></div>
+        <div class="hero__visual-parts">
+          <div class="hero__part hero__part--disc">
+            <img src="{% static 'img/parts/brake-disc.svg' %}" alt="" width="180" height="180">
+          </div>
+          <div class="hero__part hero__part--turbo">
+            <img src="{% static 'img/parts/turbo.svg' %}" alt="" width="160" height="160">
+          </div>
+          <div class="hero__part hero__part--light">
+            <img src="{% static 'img/parts/headlight.svg' %}" alt="" width="140" height="140">
+          </div>
+          <div class="hero__part hero__part--suspension">
+            <img src="{% static 'img/parts/suspension.svg' %}" alt="" width="120" height="120">
+          </div>
+        </div>
+      </div>
+
+      <div class="hero__widget">
+        <div class="vehicle-picker">
+          <h2 class="vehicle-picker__title">Подбор по автомобилю</h2>
+          <form id="vehicleForm" action="{% url 'catalog:product_list' %}" method="get">
+            <div class="vehicle-picker__selects">
+              <select class="vehicle-picker__select" name="make" id="vehicleMake" aria-label="Марка">
+                <option value="">Марка</option>
+                {% for make in search_makes %}
+                  <option value="{{ make.id }}">{{ make.name }}</option>
+                {% endfor %}
+              </select>
+              <select class="vehicle-picker__select" name="model" id="vehicleModel" aria-label="Модель" disabled>
+                <option value="">Модель</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn--primary btn--lg btn--full">Найти запчасти</button>
+          </form>
+          <div class="vehicle-picker__divider">или</div>
+          <p class="vehicle-picker__vin-title">Поиск по артикулу</p>
+          <form action="{% url 'catalog:product_list' %}" method="get" class="vehicle-picker__vin-row">
+            <input type="text" class="vehicle-picker__vin-input" name="q" placeholder="Артикул или кросс…" aria-label="Артикул">
+            <button type="submit" class="btn btn--accent">Найти</button>
+          </form>
+        </div>
+      </div>
     </div>
-    <ul class="home-stats">
-      {% if in_stock_count %}
-        <li><strong>{{ in_stock_count }}</strong> в наличии</li>
-      {% endif %}
-      {% if product_count %}
-        <li><strong>{{ product_count }}</strong> позиций в каталоге</li>
-      {% endif %}
-      <li><strong>Новые</strong> и Б/У</li>
-    </ul>
   </div>
 </section>
 
-<section class="home-section">
+{% if categories_with_icons %}
+<section class="categories" id="catalog">
   <div class="container">
-    <h2 class="home-section-title">Как заказать</h2>
-    <div class="home-steps">
-      <article class="home-step-card">
-        <div class="home-step-badge">1</div>
-        <i class="bi bi-search home-step-icon"></i>
-        <h3 class="h6 mb-2">Найдите деталь</h3>
-        <p class="mb-0 text-muted small">По артикулу, названию или кросс-номеру. Можно сразу указать марку авто.</p>
-      </article>
-      <div class="home-step-arrow" aria-hidden="true">
-        <i class="bi bi-arrow-right d-none d-md-inline"></i>
-        <i class="bi bi-arrow-down d-md-none"></i>
-      </div>
-      <article class="home-step-card">
-        <div class="home-step-badge">2</div>
-        <i class="bi bi-cart3 home-step-icon"></i>
-        <h3 class="h6 mb-2">Оформите заказ</h3>
-        <p class="mb-0 text-muted small">Положите в корзину из личного кабинета. Без оплаты на сайте.</p>
-      </article>
-      <div class="home-step-arrow" aria-hidden="true">
-        <i class="bi bi-arrow-right d-none d-md-inline"></i>
-        <i class="bi bi-arrow-down d-md-none"></i>
-      </div>
-      <article class="home-step-card">
-        <div class="home-step-badge">3</div>
-        <i class="bi bi-truck home-step-icon"></i>
-        <h3 class="h6 mb-2">Заберите или доставим</h3>
-        <p class="mb-0 text-muted small">Свяжемся, согласуем перевод, самовывоз или доставку.</p>
-      </article>
+    <div class="section-header">
+      <h2 class="section-header__title">Категории</h2>
+      <a href="{% url 'catalog:product_list' %}" class="section-header__link">Все категории &gt;</a>
     </div>
-  </div>
-</section>
 
-{% if categories %}
-<section class="home-section home-section-alt">
-  <div class="container">
-    <div class="d-flex justify-content-between align-items-end gap-3 mb-3">
-      <h2 class="home-section-title mb-0">Категории</h2>
-      <a class="small text-decoration-none" href="{% url 'catalog:product_list' %}">Все</a>
+    <div class="categories__grid categories__grid--mobile">
+      {% for item in categories_with_icons|slice:":4" %}
+        <a href="{% url 'catalog:product_list' %}?category={{ item.category.slug }}" class="category-card">
+          <span class="category-card__name">{{ item.category.name }}</span>
+          <span class="category-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 16 12 12 16 10"/></svg>
+          </span>
+          <div class="category-card__image">
+            <img src="{% static item.icon %}" alt="" width="70" height="70">
+          </div>
+        </a>
+      {% endfor %}
     </div>
-    <div class="home-cats">
-      {% for cat in categories %}
-        <a class="home-cat" href="{% url 'catalog:product_list' %}?category={{ cat.slug }}">
-          <span>{{ cat.name }}</span>
-          {% if cat.n_products %}<span class="home-cat-count">{{ cat.n_products }}</span>{% endif %}
+
+    <div class="categories__grid categories__grid--desktop">
+      {% for item in categories_with_icons %}
+        <a href="{% url 'catalog:product_list' %}?category={{ item.category.slug }}" class="category-card category-card--desktop">
+          <div class="category-card__content">
+            <span class="category-card__name">{{ item.category.name }}</span>
+            {% if item.category.n_products %}
+              <span class="category-card__count">{{ item.category.n_products }} поз.</span>
+            {% endif %}
+            <span class="category-card__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 16 12 12 16 10"/></svg>
+            </span>
+          </div>
+          <div class="category-card__image">
+            <img src="{% static item.icon %}" alt="" width="110" height="110">
+          </div>
         </a>
       {% endfor %}
     </div>
@@ -84,62 +147,80 @@
 </section>
 {% endif %}
 
-<section class="home-section">
-  <div class="container">
-    <h2 class="home-section-title">Почему {{ SHOP_NAME }}</h2>
-    <div class="row g-3">
-      <div class="col-6 col-lg-3">
-        <article class="home-card home-card-compact">
-          <i class="bi bi-box-seam home-icon"></i>
-          <h3 class="h6">Реальные остатки</h3>
-          <p class="small text-muted mb-0">Количество на складе видно сразу в карточке.</p>
-        </article>
-      </div>
-      <div class="col-6 col-lg-3">
-        <article class="home-card home-card-compact">
-          <i class="bi bi-upc-scan home-icon"></i>
-          <h3 class="h6">Кросс-номера</h3>
-          <p class="small text-muted mb-0">Ищем не только по штатному артикулу.</p>
-        </article>
-      </div>
-      <div class="col-6 col-lg-3">
-        <article class="home-card home-card-compact">
-          <i class="bi bi-car-front home-icon"></i>
-          <h3 class="h6">Подбор по авто</h3>
-          <p class="small text-muted mb-0">Марка и модель — в поиске и фильтрах каталога.</p>
-        </article>
-      </div>
-      <div class="col-6 col-lg-3">
-        <article class="home-card home-card-compact">
-          <i class="bi bi-chat-dots home-icon"></i>
-          <h3 class="h6">Живое согласование</h3>
-          <p class="small text-muted mb-0">Оплата переводом, получение — как договоримся.</p>
-        </article>
-      </div>
-    </div>
-  </div>
-</section>
-
 {% if featured_products %}
-<section class="home-section home-section-alt">
+<section class="products">
   <div class="container">
-    <div class="d-flex justify-content-between align-items-end gap-3 mb-3">
-      <h2 class="home-section-title mb-0">Сейчас в наличии</h2>
-      <a class="small text-decoration-none" href="{% url 'catalog:product_list' %}?in_stock=1">Ещё</a>
+    <div class="section-header">
+      <h2 class="section-header__title">Сейчас в наличии</h2>
+      <a href="{% url 'catalog:product_list' %}?in_stock=1" class="section-header__link">Смотреть все &gt;</a>
+      <div class="section-header__nav">
+        <button class="section-header__arrow" id="carouselPrev" type="button" aria-label="Предыдущие товары">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="section-header__arrow" id="carouselNext" type="button" aria-label="Следующие товары">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
     </div>
-    <div class="row g-3">
+
+    <div class="product-list">
       {% for product in featured_products %}
-        {% include "catalog/_product_card.html" %}
+        {% include "catalog/_home_product_list.html" %}
       {% endfor %}
+    </div>
+
+    <div class="product-carousel">
+      <div class="product-carousel__track" id="productCarousel">
+        {% for product in featured_products %}
+          {% include "catalog/_home_product_carousel.html" %}
+        {% endfor %}
+      </div>
     </div>
   </div>
 </section>
 {% endif %}
 
-<div class="home-sticky-cta d-lg-none">
-  <button class="btn btn-accent w-100 btn-lg" type="button" data-bs-toggle="modal" data-bs-target="#searchModal">
-    <i class="bi bi-search me-1"></i> Найти запчасть
-  </button>
-</div>
+{% endblock %}
 
+{% block site_footer %}
+<footer class="features-bar">
+  <div class="container">
+    <div class="features-bar__grid">
+      <div class="features-bar__item">
+        <span class="features-bar__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        </span>
+        Реальные остатки на складе
+      </div>
+      <div class="features-bar__item">
+        <span class="features-bar__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        </span>
+        Новые и Б/У запчасти
+      </div>
+      <div class="features-bar__item">
+        <span class="features-bar__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </span>
+        Поиск по кросс-номерам
+      </div>
+      <div class="features-bar__item">
+        <span class="features-bar__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+        </span>
+        Живое согласование заказа
+      </div>
+      <div class="features-bar__item">
+        <span class="features-bar__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </span>
+        <a href="{% url 'pages:offer' %}">Оферта</a> · <a href="{% url 'pages:privacy' %}">Политика ПДн</a>
+      </div>
+    </div>
+  </div>
+</footer>
+{% endblock %}
+
+{% block page_data %}
+{{ car_models|json_script:"car-models-data" }}
 {% endblock %}

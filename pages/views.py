@@ -3,10 +3,20 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import TemplateView
 
-from catalog.models import Category, Product
+from catalog.models import CarModel, Category, Product
 from catalog.services import filter_products
 
 _CATALOG_QUERY_KEYS = {'q', 'category', 'condition', 'make', 'model', 'in_stock', 'sort', 'page'}
+
+_CATEGORY_ICONS = (
+    'img/categories/filters.svg',
+    'img/categories/brakes.svg',
+    'img/categories/suspension.svg',
+    'img/categories/oils.svg',
+    'img/categories/engine.svg',
+    'img/categories/optics.svg',
+    'img/categories/electrical.svg',
+)
 
 
 class HomeView(TemplateView):
@@ -21,14 +31,26 @@ class HomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['categories'] = (
+        categories = list(
             Category.objects.filter(parent__isnull=True)
             .annotate(n_products=Count('products'))
             .order_by('sort_order', 'name')
         )
+        ctx['categories'] = categories
+        ctx['categories_with_icons'] = [
+            {
+                'category': category,
+                'icon': _CATEGORY_ICONS[index % len(_CATEGORY_ICONS)],
+            }
+            for index, category in enumerate(categories)
+        ]
         ctx['featured_products'] = list(
             filter_products(in_stock=True, sort='-created_at')[:8]
         )
+        ctx['car_models'] = [
+            {'id': model.id, 'make_id': model.make_id, 'name': model.name}
+            for model in CarModel.objects.select_related('make').order_by('make__name', 'name')
+        ]
         ctx['product_count'] = Product.objects.filter(is_active=True).count()
         ctx['in_stock_count'] = Product.objects.filter(
             is_active=True,

@@ -22,7 +22,10 @@ _DEFAULT_ALLOWED_HOSTS = (
 ALLOWED_HOSTS = [
     h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', _DEFAULT_ALLOWED_HOSTS).split(',') if h.strip()
 ]
-for _host in ('91.239.206.123', '91.239.207.224', '192.168.4.101'):
+for _host in (
+    '91.239.206.123', '91.239.207.224', '192.168.4.101',
+    'localhost', '127.0.0.1', 'testserver',
+):
     if _host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(_host)
 
@@ -33,6 +36,12 @@ CSRF_TRUSTED_ORIGINS = [
         'http://91.239.207.224,https://91.239.207.224',
     ).split(',') if o.strip()
 ]
+for _origin in (
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+):
+    if _origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_origin)
 
 # Nginx проксирует HTTPS → gunicorn. Не форсируем HTTPS-cookie:
 # сайт ещё может открываться по http://IP/

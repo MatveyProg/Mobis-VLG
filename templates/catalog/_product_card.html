@@ -1,6 +1,6 @@
 <div class="col-6 col-xl-4">
-  <a href="{{ product.get_absolute_url }}" class="text-decoration-none text-dark">
-    <article class="product-card">
+  <a href="{{ product.get_absolute_url }}" class="text-decoration-none">
+    <article class="catalog-card">
       {% with img=product.images.first %}
         {% if img %}
           <img src="{{ img.image.url }}" alt="{{ product.name_ru }}">

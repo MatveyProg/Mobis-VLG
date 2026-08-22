@@ -1,0 +1,27 @@
+{% load static %}
+<article class="product-card">
+  <div class="product-card__top">
+    <span class="product-card__brand">{{ product.get_condition_display }}</span>
+  </div>
+  <a href="{{ product.get_absolute_url }}" class="product-card__body">
+    <div class="product-card__image">
+      {% with img=product.images.first %}
+        {% if img %}
+          <img src="{{ img.image.url }}" alt="{{ product.display_name }}" width="80" height="80">
+        {% else %}
+          <img src="{% static 'img/products/brake-disc-product.svg' %}" alt="" width="80" height="80">
+        {% endif %}
+      {% endwith %}
+    </div>
+    <div class="product-card__info">
+      <h3 class="product-card__title">{{ product.display_name }}</h3>
+      <p class="product-card__sku">{{ product.sku }}</p>
+      <span class="product-card__compat">✓ В наличии</span>
+      <p class="product-card__delivery">{{ product.stock.quantity_available }} шт.</p>
+    </div>
+  </a>
+  <div class="product-card__footer">
+    <span class="product-card__price">{{ product.price_rub }} ₽</span>
+    <a href="{{ product.get_absolute_url }}" class="btn btn--primary product-card__cart">Подробнее</a>
+  </div>
+</article>

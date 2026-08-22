@@ -1,169 +1,186 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="{% block meta_description %}{{ SHOP_NAME }} — автозапчасти{% endblock %}">
   <title>{% block title %}{{ SHOP_NAME }}{% endblock %}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/variables.css' %}">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  {% block bootstrap_head %}
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link href="/static/css/shop.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/shop-pages.css' %}">
+  {% endblock %}
   {% block extra_css %}{% endblock %}
 </head>
-<body class="{% block body_class %}{% endblock %}">
-  <nav class="navbar navbar-expand-lg navbar-dark shop-nav">
-    <div class="container">
-      <a class="navbar-brand fw-bold" href="{% url 'pages:home' %}">{{ SHOP_NAME }}</a>
-      <div class="d-flex d-lg-none align-items-center gap-1 ms-auto">
-        <button class="btn btn-nav-icon" type="button"
-                data-bs-toggle="modal" data-bs-target="#searchModal"
-                aria-label="Найти запчасть">
-          <i class="bi bi-search"></i>
-        </button>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-label="Меню">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-      </div>
-      <div class="collapse navbar-collapse" id="navMain">
-        <ul class="navbar-nav me-lg-3">
-          <li class="nav-item">
-            <a class="nav-link{% if request.resolver_match.url_name == 'product_list' %} active{% endif %}"
-               href="{% url 'catalog:product_list' %}">Каталог</a>
-          </li>
-        </ul>
-        <form class="d-none d-lg-flex ms-lg-2 my-2 my-lg-0 flex-grow-1" action="{% url 'catalog:product_list' %}" method="get">
-          <input class="form-control me-2" type="search" name="q" placeholder="Артикул, название, кросс…" value="{{ request.GET.q }}">
-          <button class="btn btn-accent" type="submit">Найти</button>
-        </form>
-        <ul class="navbar-nav ms-lg-3 align-items-lg-center">
-          {% if user.is_authenticated %}
-            {% if user.is_staff %}
-              <li class="nav-item">
-                <a class="nav-link" href="{% url 'orders:active_orders' %}">
-                  Активные заказы{% if active_orders_count %} <span class="badge text-bg-warning">{{ active_orders_count }}</span>{% endif %}
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="{% url 'warehouse:stock_balances' %}">Остатки</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="{% url 'warehouse:requisition_list' %}">Заявки</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="{% url 'warehouse:stock_in_list' %}">Приход</a>
-              </li>
-              <li class="nav-item"><a class="nav-link" href="/admin/">Админка</a></li>
-            {% else %}
-              <li class="nav-item">
-                <a class="nav-link" href="{% url 'orders:cart' %}">Корзина{% if cart_count %} <span class="badge text-bg-warning">{{ cart_count }}</span>{% endif %}</a>
-              </li>
-              <li class="nav-item"><a class="nav-link" href="{% url 'orders:order_list' %}">Мои заказы</a></li>
-            {% endif %}
-            <li class="nav-item">
-              <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-link nav-link border-0">Выход</button>
-              </form>
-            </li>
+<body class="{% block body_class %}page-inner{% endblock %}">
+
+  <header class="header">
+    <div class="container header__inner">
+
+      <button class="header__menu-btn" id="menuBtn" type="button" aria-label="Открыть меню">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+
+      <a href="{% url 'pages:home' %}" class="header__logo">
+        <span class="header__logo-icon" aria-hidden="true">{{ SHOP_NAME|slice:":1"|upper }}</span>
+        <span class="header__logo-main">{{ SHOP_NAME|upper }}</span>
+        <span class="header__logo-divider">/</span>
+        <span class="header__logo-sub">АВТОЗАПЧАСТИ</span>
+      </a>
+
+      {% if request.resolver_match.namespace != 'catalog' %}
+      <a href="{% url 'catalog:product_list' %}" class="btn btn--accent header__catalog">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+        Каталог
+      </a>
+      {% endif %}
+
+      <form class="header__search-group" action="{% url 'catalog:product_list' %}" method="get" role="search">
+        <div class="header__search">
+          <span class="header__search-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+          <input type="search" class="header__search-input" name="q" placeholder="Артикул, название или кросс…" value="{{ request.GET.q }}" aria-label="Поиск">
+        </div>
+      </form>
+
+      <nav class="header__nav-links" aria-label="Пользовательское меню">
+        {% if user.is_authenticated %}
+          {% if user.is_staff %}
+            <a href="{% url 'orders:active_orders' %}" class="header__nav-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Заказы
+              {% if active_orders_count %}<span class="header__badge">{{ active_orders_count }}</span>{% endif %}
+            </a>
+            <a href="{% url 'warehouse:stock_balances' %}" class="header__nav-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              Склад
+            </a>
+            <a href="/admin/" class="header__nav-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              Админ
+            </a>
           {% else %}
-            <li class="nav-item"><a class="nav-link" href="{% url 'accounts:login' %}">Вход</a></li>
-            <li class="nav-item"><a class="nav-link" href="{% url 'accounts:register' %}">Регистрация</a></li>
+            <a href="{% url 'orders:cart' %}" class="header__nav-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+              Корзина
+              {% if cart_count %}<span class="header__badge" data-cart-count>{{ cart_count }}</span>{% endif %}
+            </a>
+            <a href="{% url 'orders:order_list' %}" class="header__nav-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Заказы
+            </a>
           {% endif %}
-        </ul>
+          <form method="post" action="{% url 'accounts:logout' %}" class="header__nav-link-form">
+            {% csrf_token %}
+            <button type="submit" class="header__nav-link header__nav-link--btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Выход
+            </button>
+          </form>
+        {% else %}
+          <a href="{% url 'accounts:login' %}" class="header__nav-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            Вход
+          </a>
+          <a href="{% url 'accounts:register' %}" class="header__nav-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            Регистрация
+          </a>
+        {% endif %}
+      </nav>
+
+      <div class="header__actions">
+        {% if user.is_authenticated and not user.is_staff %}
+          <a href="{% url 'orders:cart' %}" class="header__action" aria-label="Корзина">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+            </svg>
+            {% if cart_count %}<span class="header__badge" data-cart-count>{{ cart_count }}</span>{% endif %}
+          </a>
+        {% else %}
+          <a href="{% url 'accounts:login' %}" class="header__action" aria-label="Вход">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </a>
+        {% endif %}
       </div>
     </div>
-  </nav>
+  </header>
 
-  <main class="{% block main_class %}container py-4{% endblock %}">
+  <aside class="sidebar" id="sidebar" aria-hidden="true">
+    <div class="sidebar__overlay" id="sidebarOverlay"></div>
+    <div class="sidebar__panel">
+      <button class="sidebar__close" id="sidebarClose" type="button" aria-label="Закрыть меню">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+      <nav class="sidebar__nav">
+        <a href="{% url 'pages:home' %}">Главная</a>
+        <a href="{% url 'catalog:product_list' %}">Каталог</a>
+        {% if user.is_authenticated %}
+          {% if user.is_staff %}
+            <a href="{% url 'orders:active_orders' %}">Активные заказы</a>
+            <a href="{% url 'warehouse:stock_balances' %}">Остатки</a>
+            <a href="{% url 'warehouse:requisition_list' %}">Заявки</a>
+            <a href="/admin/">Админка</a>
+          {% else %}
+            <a href="{% url 'orders:cart' %}">Корзина{% if cart_count %} ({{ cart_count }}){% endif %}</a>
+            <a href="{% url 'orders:order_list' %}">Мои заказы</a>
+          {% endif %}
+          <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="sidebar__nav-btn">Выход</button>
+          </form>
+        {% else %}
+          <a href="{% url 'accounts:login' %}">Вход</a>
+          <a href="{% url 'accounts:register' %}">Регистрация</a>
+        {% endif %}
+        <a href="{% url 'pages:offer' %}">Оферта</a>
+        <a href="{% url 'pages:privacy' %}">Политика ПДн</a>
+      </nav>
+    </div>
+  </aside>
+
+  {% block mobile_search %}{% endblock %}
+
+  <main class="{% block main_class %}container page-content{% endblock %}">
     {% if messages %}
-      <div class="{% block messages_wrap %}{% endblock %}">
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-      {% endfor %}
+      <div class="{% block messages_wrap %}container pt-3 flash-messages{% endblock %}">
+        {% for message in messages %}
+          <div class="flash flash--{{ message.tags|default:'info' }}" role="alert">
+            {{ message }}
+          </div>
+        {% endfor %}
       </div>
     {% endif %}
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="shop-footer mt-auto">
-    <div class="container py-4 d-flex flex-wrap gap-3 justify-content-between">
-      <div><strong>{{ SHOP_NAME }}</strong> — автозапчасти</div>
-      <div class="d-flex gap-3">
-        <a href="{% url 'pages:offer' %}">Оферта</a>
-        <a href="{% url 'pages:privacy' %}">Политика ПДн</a>
-      </div>
-    </div>
-  </footer>
+  {% block site_footer %}{% endblock %}
 
-  <div class="modal fade search-modal" id="searchModal" tabindex="-1" aria-labelledby="searchModalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content">
-        <div class="modal-header border-0 pb-0">
-          <div>
-            <p class="search-modal-kicker mb-1">Поиск по складу</p>
-            <h2 class="modal-title h4 mb-0" id="searchModalTitle">Найти запчасть</h2>
-          </div>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
-        </div>
-        <div class="modal-body pt-3">
-          <form action="{% url 'catalog:product_list' %}" method="get">
-            <div class="mb-3">
-              <label class="form-label" for="searchQ">Артикул, название или кросс-номер</label>
-              <input class="form-control form-control-lg search-input" type="search" name="q" id="searchQ"
-                     placeholder="Например, 28113-2S000" value="{{ request.GET.q }}" autocomplete="off">
-            </div>
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label" for="searchMake">Марка</label>
-                <select name="make" id="searchMake" class="form-select form-select-lg">
-                  <option value="">Любая</option>
-                  {% for make in search_makes %}
-                    <option value="{{ make.id }}" {% if request.GET.make == make.id|stringformat:'s' %}selected{% endif %}>{{ make.name }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="searchCondition">Состояние</label>
-                <select name="condition" id="searchCondition" class="form-select form-select-lg">
-                  <option value="">Любое</option>
-                  <option value="new" {% if request.GET.condition == 'new' %}selected{% endif %}>Новый</option>
-                  <option value="used" {% if request.GET.condition == 'used' %}selected{% endif %}>Б/У</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-check mt-3">
-              <input class="form-check-input" type="checkbox" name="in_stock" value="1" id="searchInStock"
-                     {% if request.GET.in_stock == '1' %}checked{% endif %}>
-              <label class="form-check-label" for="searchInStock">Только в наличии</label>
-            </div>
-            <button class="btn btn-accent btn-lg w-100 mt-4" type="submit">
-              <i class="bi bi-search me-1"></i> Найти
-            </button>
-            <a class="btn btn-link w-100 mt-1 text-decoration-none" href="{% url 'catalog:product_list' %}">
-              Открыть весь каталог
-            </a>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
+  {% block bottom_nav %}
+    {% include "includes/bottom_nav.html" %}
+  {% endblock %}
 
+  {% block page_data %}{% endblock %}
+  <script src="{% static 'js/main.js' %}"></script>
+  {% block bootstrap_foot %}
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    (function () {
-      var modalEl = document.getElementById('searchModal');
-      if (!modalEl) return;
-      var input = document.getElementById('searchQ');
-      modalEl.addEventListener('shown.bs.modal', function () {
-        if (input) input.focus();
-      });
-      if (location.hash === '#search') {
-        bootstrap.Modal.getOrCreateInstance(modalEl).show();
-      }
-    })();
-  </script>
+  {% endblock %}
   {% block extra_js %}{% endblock %}
 </body>
 </html>
