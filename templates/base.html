@@ -2,23 +2,37 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block title %}{{ SHOP_NAME }}{% endblock %}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link href="/static/css/shop.css" rel="stylesheet">
   {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
   <nav class="navbar navbar-expand-lg navbar-dark shop-nav">
     <div class="container">
-      <a class="navbar-brand fw-bold" href="{% url 'catalog:product_list' %}">{{ SHOP_NAME }}</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+      <a class="navbar-brand fw-bold" href="{% url 'pages:home' %}">{{ SHOP_NAME }}</a>
+      <div class="d-flex d-lg-none align-items-center gap-1 ms-auto">
+        <button class="btn btn-nav-icon" type="button"
+                data-bs-toggle="modal" data-bs-target="#searchModal"
+                aria-label="Найти запчасть">
+          <i class="bi bi-search"></i>
+        </button>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-label="Меню">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+      </div>
       <div class="collapse navbar-collapse" id="navMain">
-        <form class="d-flex ms-lg-3 my-2 my-lg-0 flex-grow-1" action="{% url 'catalog:product_list' %}" method="get">
-          <input class="form-control me-2" type="search" name="q" placeholder="Артикул, название (рус/англ), кросс…" value="{{ request.GET.q }}">
-          <button class="btn btn-accent" type="submit">Поиск</button>
+        <ul class="navbar-nav me-lg-3">
+          <li class="nav-item">
+            <a class="nav-link{% if request.resolver_match.url_name == 'product_list' %} active{% endif %}"
+               href="{% url 'catalog:product_list' %}">Каталог</a>
+          </li>
+        </ul>
+        <form class="d-none d-lg-flex ms-lg-2 my-2 my-lg-0 flex-grow-1" action="{% url 'catalog:product_list' %}" method="get">
+          <input class="form-control me-2" type="search" name="q" placeholder="Артикул, название, кросс…" value="{{ request.GET.q }}">
+          <button class="btn btn-accent" type="submit">Найти</button>
         </form>
         <ul class="navbar-nav ms-lg-3 align-items-lg-center">
           {% if user.is_authenticated %}
@@ -59,14 +73,16 @@
     </div>
   </nav>
 
-  <main class="container py-4">
+  <main class="{% block main_class %}container py-4{% endblock %}">
     {% if messages %}
+      <div class="{% block messages_wrap %}{% endblock %}">
       {% for message in messages %}
         <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
           {{ message }}
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
       {% endfor %}
+      </div>
     {% endif %}
     {% block content %}{% endblock %}
   </main>
@@ -81,7 +97,73 @@
     </div>
   </footer>
 
+  <div class="modal fade search-modal" id="searchModal" tabindex="-1" aria-labelledby="searchModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header border-0 pb-0">
+          <div>
+            <p class="search-modal-kicker mb-1">Поиск по складу</p>
+            <h2 class="modal-title h4 mb-0" id="searchModalTitle">Найти запчасть</h2>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+        </div>
+        <div class="modal-body pt-3">
+          <form action="{% url 'catalog:product_list' %}" method="get">
+            <div class="mb-3">
+              <label class="form-label" for="searchQ">Артикул, название или кросс-номер</label>
+              <input class="form-control form-control-lg search-input" type="search" name="q" id="searchQ"
+                     placeholder="Например, 28113-2S000" value="{{ request.GET.q }}" autocomplete="off">
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label" for="searchMake">Марка</label>
+                <select name="make" id="searchMake" class="form-select form-select-lg">
+                  <option value="">Любая</option>
+                  {% for make in search_makes %}
+                    <option value="{{ make.id }}" {% if request.GET.make == make.id|stringformat:'s' %}selected{% endif %}>{{ make.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="searchCondition">Состояние</label>
+                <select name="condition" id="searchCondition" class="form-select form-select-lg">
+                  <option value="">Любое</option>
+                  <option value="new" {% if request.GET.condition == 'new' %}selected{% endif %}>Новый</option>
+                  <option value="used" {% if request.GET.condition == 'used' %}selected{% endif %}>Б/У</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-check mt-3">
+              <input class="form-check-input" type="checkbox" name="in_stock" value="1" id="searchInStock"
+                     {% if request.GET.in_stock == '1' %}checked{% endif %}>
+              <label class="form-check-label" for="searchInStock">Только в наличии</label>
+            </div>
+            <button class="btn btn-accent btn-lg w-100 mt-4" type="submit">
+              <i class="bi bi-search me-1"></i> Найти
+            </button>
+            <a class="btn btn-link w-100 mt-1 text-decoration-none" href="{% url 'catalog:product_list' %}">
+              Открыть весь каталог
+            </a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    (function () {
+      var modalEl = document.getElementById('searchModal');
+      if (!modalEl) return;
+      var input = document.getElementById('searchQ');
+      modalEl.addEventListener('shown.bs.modal', function () {
+        if (input) input.focus();
+      });
+      if (location.hash === '#search') {
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      }
+    })();
+  </script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

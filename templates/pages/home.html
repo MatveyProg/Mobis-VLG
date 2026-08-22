@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}{{ SHOP_NAME }} — автозапчасти{% endblock %}
+{% block body_class %}page-home{% endblock %}
+{% block main_class %}{% endblock %}
+{% block messages_wrap %}container pt-3{% endblock %}
+{% block content %}
+
+<section class="home-hero">
+  <div class="container">
+    <p class="home-kicker">Склад · Волгоград</p>
+    <h1 class="home-title">Запчасти, которые можно взять сегодня</h1>
+    <p class="home-lead">
+      Оригинал и контракт. Ищем по артикулу, названию и кросс-номерам.
+      Онлайн-оплаты нет — после заказа согласуем перевод и получение.
+    </p>
+    <div class="home-hero-actions">
+      <button class="btn btn-accent btn-lg" type="button" data-bs-toggle="modal" data-bs-target="#searchModal">
+        <i class="bi bi-search me-1"></i> Найти запчасть
+      </button>
+      <a class="btn btn-hero-ghost btn-lg" href="{% url 'catalog:product_list' %}">Каталог</a>
+    </div>
+    <ul class="home-stats">
+      {% if in_stock_count %}
+        <li><strong>{{ in_stock_count }}</strong> в наличии</li>
+      {% endif %}
+      {% if product_count %}
+        <li><strong>{{ product_count }}</strong> позиций в каталоге</li>
+      {% endif %}
+      <li><strong>Новые</strong> и Б/У</li>
+    </ul>
+  </div>
+</section>
+
+<section class="home-section">
+  <div class="container">
+    <h2 class="home-section-title">Как заказать</h2>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <article class="home-card">
+          <span class="home-step">1</span>
+          <h3 class="h5">Найдите деталь</h3>
+          <p class="mb-0 text-muted">По артикулу, названию или кросс-номеру. Можно сразу указать марку авто.</p>
+        </article>
+      </div>
+      <div class="col-md-4">
+        <article class="home-card">
+          <span class="home-step">2</span>
+          <h3 class="h5">Оформите заказ</h3>
+          <p class="mb-0 text-muted">Положите в корзину из личного кабинета. Без оплаты на сайте.</p>
+        </article>
+      </div>
+      <div class="col-md-4">
+        <article class="home-card">
+          <span class="home-step">3</span>
+          <h3 class="h5">Заберите или доставим</h3>
+          <p class="mb-0 text-muted">Свяжемся, согласуем перевод, самовывоз или доставку.</p>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if categories %}
+<section class="home-section home-section-alt">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-end gap-3 mb-3">
+      <h2 class="home-section-title mb-0">Категории</h2>
+      <a class="small text-decoration-none" href="{% url 'catalog:product_list' %}">Все</a>
+    </div>
+    <div class="home-cats">
+      {% for cat in categories %}
+        <a class="home-cat" href="{% url 'catalog:product_list' %}?category={{ cat.slug }}">
+          <span>{{ cat.name }}</span>
+          {% if cat.n_products %}<span class="home-cat-count">{{ cat.n_products }}</span>{% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="home-section">
+  <div class="container">
+    <h2 class="home-section-title">Почему {{ SHOP_NAME }}</h2>
+    <div class="row g-3">
+      <div class="col-6 col-lg-3">
+        <article class="home-card home-card-compact">
+          <i class="bi bi-box-seam home-icon"></i>
+          <h3 class="h6">Реальные остатки</h3>
+          <p class="small text-muted mb-0">Количество на складе видно сразу в карточке.</p>
+        </article>
+      </div>
+      <div class="col-6 col-lg-3">
+        <article class="home-card home-card-compact">
+          <i class="bi bi-upc-scan home-icon"></i>
+          <h3 class="h6">Кросс-номера</h3>
+          <p class="small text-muted mb-0">Ищем не только по штатному артикулу.</p>
+        </article>
+      </div>
+      <div class="col-6 col-lg-3">
+        <article class="home-card home-card-compact">
+          <i class="bi bi-car-front home-icon"></i>
+          <h3 class="h6">Подбор по авто</h3>
+          <p class="small text-muted mb-0">Марка и модель — в поиске и фильтрах каталога.</p>
+        </article>
+      </div>
+      <div class="col-6 col-lg-3">
+        <article class="home-card home-card-compact">
+          <i class="bi bi-chat-dots home-icon"></i>
+          <h3 class="h6">Живое согласование</h3>
+          <p class="small text-muted mb-0">Оплата переводом, получение — как договоримся.</p>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if featured_products %}
+<section class="home-section home-section-alt">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-end gap-3 mb-3">
+      <h2 class="home-section-title mb-0">Сейчас в наличии</h2>
+      <a class="small text-decoration-none" href="{% url 'catalog:product_list' %}?in_stock=1">Ещё</a>
+    </div>
+    <div class="row g-3">
+      {% for product in featured_products %}
+        {% include "catalog/_product_card.html" %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<div class="home-sticky-cta d-lg-none">
+  <button class="btn btn-accent w-100 btn-lg" type="button" data-bs-toggle="modal" data-bs-target="#searchModal">
+    <i class="bi bi-search me-1"></i> Найти запчасть
+  </button>
+</div>
+
+{% endblock %}

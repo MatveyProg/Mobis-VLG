@@ -9,7 +9,7 @@ from .forms import EmailAuthenticationForm, RegisterForm
 class RegisterView(CreateView):
     form_class = RegisterForm
     template_name = 'accounts/register.html'
-    success_url = reverse_lazy('catalog:product_list')
+    success_url = reverse_lazy('pages:home')
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -24,4 +24,4 @@ class UserLoginView(LoginView):
 
 
 class UserLogoutView(LogoutView):
-    next_page = reverse_lazy('catalog:product_list')
+    next_page = reverse_lazy('pages:home')

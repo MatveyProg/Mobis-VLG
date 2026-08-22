@@ -1,0 +1,25 @@
+<div class="col-6 col-xl-4">
+  <a href="{{ product.get_absolute_url }}" class="text-decoration-none text-dark">
+    <article class="product-card">
+      {% with img=product.images.first %}
+        {% if img %}
+          <img src="{{ img.image.url }}" alt="{{ product.name_ru }}">
+        {% else %}
+          <img src="https://placehold.co/400x180/e8e2d8/1f3a5f?text=Mobis-VLG" alt="">
+        {% endif %}
+      {% endwith %}
+      <div class="p-3">
+        <div class="text-muted small">{{ product.sku }} · {{ product.get_condition_display }}</div>
+        <h2 class="h6 mt-1 product-card-title">{{ product.display_name }}</h2>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+          <span class="price">{{ product.price_rub }} ₽</span>
+          {% if product.stock.quantity_available > 0 %}
+            <span class="badge text-bg-success badge-stock">{{ product.stock.quantity_available }} шт</span>
+          {% else %}
+            <span class="badge text-bg-secondary badge-stock">Нет</span>
+          {% endif %}
+        </div>
+      </div>
+    </article>
+  </a>
+</div>

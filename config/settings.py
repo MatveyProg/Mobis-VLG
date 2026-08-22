@@ -15,18 +15,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-insecure-change-me')
 DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('1', 'true', 'yes')
 
-# VPS: 91.239.206.123. Домен добавьте в DJANGO_ALLOWED_HOSTS в .env
-_DEFAULT_ALLOWED_HOSTS = '91.239.206.123,localhost,127.0.0.1,testserver'
+# VPS: 91.239.207.224. Домен добавьте в DJANGO_ALLOWED_HOSTS в .env
+_DEFAULT_ALLOWED_HOSTS = '91.239.207.224,localhost,127.0.0.1,testserver'
 ALLOWED_HOSTS = [
     h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', _DEFAULT_ALLOWED_HOSTS).split(',') if h.strip()
 ]
-if '91.239.206.123' not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append('91.239.206.123')
+if '91.239.207.224' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('91.239.207.224')
 
 CSRF_TRUSTED_ORIGINS = [
     o.strip() for o in os.getenv(
         'DJANGO_CSRF_TRUSTED_ORIGINS',
-        'http://91.239.206.123,https://91.239.206.123',
+        'http://91.239.207.224,https://91.239.207.224',
     ).split(',') if o.strip()
 ]
 
@@ -136,8 +136,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'accounts.User'
 
 LOGIN_URL = 'accounts:login'
-LOGIN_REDIRECT_URL = 'catalog:product_list'
-LOGOUT_REDIRECT_URL = 'catalog:product_list'
+LOGIN_REDIRECT_URL = 'pages:home'
+LOGOUT_REDIRECT_URL = 'pages:home'
 
 SHOP_NAME = 'Mobis-VLG'
 PRODUCTS_PER_PAGE = int(os.getenv('DJANGO_PRODUCTS_PER_PAGE', '20'))

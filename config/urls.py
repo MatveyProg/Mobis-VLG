@@ -8,9 +8,9 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('orders/', include('orders.urls')),
     path('warehouse/', include('warehouse.urls')),
-    path('pages/', include('pages.urls')),
-    path('', include('catalog.urls')),
     path('reports/', include('reports.urls')),
+    path('', include('pages.urls')),
+    path('', include('catalog.urls')),
 ]
 
 admin.site.site_header = f'{settings.SHOP_NAME} — администрирование'
