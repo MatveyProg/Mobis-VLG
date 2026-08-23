@@ -1,3 +1,4 @@
+{% load static %}
 <div class="col-6 col-xl-4">
   <a href="{{ product.get_absolute_url }}" class="text-decoration-none">
     <article class="catalog-card">
@@ -5,7 +6,7 @@
         {% if img %}
           <img src="{{ img.image.url }}" alt="{{ product.name_ru }}">
         {% else %}
-          <img src="https://placehold.co/400x180/e8e2d8/1f3a5f?text=Mobis-VLG" alt="">
+          <img src="{% static 'img/products/placeholder.png' %}" alt="MOBIS-VLG">
         {% endif %}
       {% endwith %}
       <div class="p-3">

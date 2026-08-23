@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{{ product.name_ru }} — {{ SHOP_NAME }}{% endblock %}
 {% block body_class %}page-inner{% endblock %}
 {% block main_class %}container page-content{% endblock %}
@@ -9,7 +10,7 @@
       {% if main %}
         <img id="mainImage" src="{{ main.image.url }}" class="img-fluid border" alt="{{ product.name_ru }}">
       {% else %}
-        <img src="https://placehold.co/600x400/e8e2d8/1f3a5f?text=Mobis-VLG" class="img-fluid border" alt="">
+        <img src="{% static 'img/products/placeholder.png' %}" class="img-fluid border" alt="MOBIS-VLG">
       {% endif %}
     {% endwith %}
     <div class="d-flex flex-wrap gap-2 mt-2">

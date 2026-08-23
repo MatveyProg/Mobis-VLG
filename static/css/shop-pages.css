@@ -49,6 +49,37 @@ body.page-inner > main {
   color: var(--color-text-secondary);
 }
 
+.page-inner .header a,
+.page-inner .header__logo,
+.page-inner .header__action,
+.page-inner .bottom-nav a,
+.page-inner .bottom-nav__item,
+.page-inner .sidebar a {
+  text-decoration: none !important;
+}
+
+.header__catalog {
+  display: none !important;
+}
+
+@media (min-width: 1024px) {
+  .header__catalog {
+    display: inline-flex !important;
+  }
+}
+
+.page-inner .btn.btn--accent {
+  background: var(--color-accent);
+  border-color: transparent;
+  color: #fff;
+}
+
+.page-inner .btn.btn--accent:hover {
+  background: var(--color-accent-hover);
+  border-color: transparent;
+  color: #fff;
+}
+
 .page-inner .btn-accent {
   background: var(--color-primary);
   border-color: var(--color-primary);

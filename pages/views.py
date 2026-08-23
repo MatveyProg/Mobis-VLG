@@ -8,16 +8,6 @@ from catalog.services import filter_products
 
 _CATALOG_QUERY_KEYS = {'q', 'category', 'condition', 'make', 'model', 'in_stock', 'sort', 'page'}
 
-_CATEGORY_ICONS = (
-    'img/categories/filters.svg',
-    'img/categories/brakes.svg',
-    'img/categories/suspension.svg',
-    'img/categories/oils.svg',
-    'img/categories/engine.svg',
-    'img/categories/optics.svg',
-    'img/categories/electrical.svg',
-)
-
 
 class HomeView(TemplateView):
     template_name = 'pages/home.html'
@@ -37,13 +27,6 @@ class HomeView(TemplateView):
             .order_by('sort_order', 'name')
         )
         ctx['categories'] = categories
-        ctx['categories_with_icons'] = [
-            {
-                'category': category,
-                'icon': _CATEGORY_ICONS[index % len(_CATEGORY_ICONS)],
-            }
-            for index, category in enumerate(categories)
-        ]
         ctx['featured_products'] = list(
             filter_products(in_stock=True, sort='-created_at')[:8]
         )

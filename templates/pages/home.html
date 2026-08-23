@@ -63,13 +63,13 @@
             <img src="{% static 'img/parts/eng.png' %}" alt="" width="180" height="180">
           </div>
           <div class="hero__part hero__part--turbo">
-            <img src="{% static 'img/parts/turbo.svg' %}" alt="" width="160" height="160">
+            <img src="{% static 'img/parts/turbo.png' %}" alt="" width="160" height="160">
           </div>
           <div class="hero__part hero__part--light">
-            <img src="{% static 'img/parts/headlight.svg' %}" alt="" width="140" height="140">
+            <img src="{% static 'img/parts/headlight.png' %}" alt="" width="140" height="140">
           </div>
           <div class="hero__part hero__part--suspension">
-            <img src="{% static 'img/parts/suspension.svg' %}" alt="" width="120" height="120">
+            <img src="{% static 'img/categories/brakes.png' %}" alt="" width="120" height="120">
           </div>
         </div>
       </div>
@@ -103,7 +103,7 @@
   </div>
 </section>
 
-{% if categories_with_icons %}
+{% if categories %}
 <section class="categories" id="catalog">
   <div class="container">
     <div class="section-header">
@@ -111,35 +111,18 @@
       <a href="{% url 'catalog:product_list' %}" class="section-header__link">Все категории &gt;</a>
     </div>
 
-    <div class="categories__grid categories__grid--mobile">
-      {% for item in categories_with_icons|slice:":4" %}
-        <a href="{% url 'catalog:product_list' %}?category={{ item.category.slug }}" class="category-card">
-          <span class="category-card__name">{{ item.category.name }}</span>
-          <span class="category-card__icon">
+    <div class="categories__grid">
+      {% for category in categories %}
+        <a href="{% url 'catalog:product_list' %}?category={{ category.slug }}" class="category-card">
+          <span class="category-card__text">
+            <span class="category-card__name">{{ category.name }}</span>
+            {% if category.n_products %}
+              <span class="category-card__count">{{ category.n_products }} поз.</span>
+            {% endif %}
+          </span>
+          <span class="category-card__icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 16 12 12 16 10"/></svg>
           </span>
-          <div class="category-card__image">
-            <img src="{% static item.icon %}" alt="" width="70" height="70">
-          </div>
-        </a>
-      {% endfor %}
-    </div>
-
-    <div class="categories__grid categories__grid--desktop">
-      {% for item in categories_with_icons %}
-        <a href="{% url 'catalog:product_list' %}?category={{ item.category.slug }}" class="category-card category-card--desktop">
-          <div class="category-card__content">
-            <span class="category-card__name">{{ item.category.name }}</span>
-            {% if item.category.n_products %}
-              <span class="category-card__count">{{ item.category.n_products }} поз.</span>
-            {% endif %}
-            <span class="category-card__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 16 12 12 16 10"/></svg>
-            </span>
-          </div>
-          <div class="category-card__image">
-            <img src="{% static item.icon %}" alt="" width="110" height="110">
-          </div>
         </a>
       {% endfor %}
     </div>
