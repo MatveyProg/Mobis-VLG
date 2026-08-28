@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% block title %}{{ title }} — {{ SHOP_NAME }}{% endblock %}
 {% block content %}
-<a href="{% url 'warehouse:stock_in_list' %}" class="text-decoration-none">← К приходам</a>
-<h1 class="h3 mt-2 mb-3">{{ title }}</h1>
+{% url 'warehouse:stock_in_list' as back_url %}
+{% include "includes/back_link.html" with url=back_url label="К приходам" %}
+<h1 class="h3 mb-3">{{ title }}</h1>
 <form method="post" class="filters-panel col-lg-6">
   {% csrf_token %}
   {% for field in form %}

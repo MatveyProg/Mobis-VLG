@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% block title %}{{ requisition.number }} — {{ SHOP_NAME }}{% endblock %}
 {% block content %}
-<a href="{% url 'warehouse:requisition_list' %}" class="text-decoration-none">← К заявкам</a>
+{% url 'warehouse:requisition_list' as back_url %}
+{% include "includes/back_link.html" with url=back_url label="К заявкам" %}
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mt-2 mb-3">
   <div>
@@ -44,7 +45,7 @@
 
 <h2 class="h5">Позиции</h2>
 <div class="table-responsive mb-3">
-  <table class="table table-sm bg-white align-middle">
+  <table class="table table-sm align-middle">
     <thead>
       <tr>
         <th>#</th>

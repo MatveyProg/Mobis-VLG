@@ -47,7 +47,7 @@ def cart_add(request, pk):
         return redirect(product.get_absolute_url())
     item.quantity = new_qty
     item.save()
-    messages.success(request, f'«{product.name_ru}» добавлен в корзину.')
+    messages.success(request, f'«{product.display_name}» добавлен в корзину.')
     return redirect('orders:cart')
 
 
@@ -56,10 +56,16 @@ def cart_add(request, pk):
 def cart_update(request, pk):
     cart = get_cart(request.user)
     item = get_object_or_404(CartItem, cart=cart, pk=pk)
-    try:
-        qty = int(request.POST.get('quantity', 1))
-    except (TypeError, ValueError):
-        qty = 1
+    action = request.POST.get('action')
+    if action == 'inc':
+        qty = item.quantity + 1
+    elif action == 'dec':
+        qty = item.quantity - 1
+    else:
+        try:
+            qty = int(request.POST.get('quantity', item.quantity))
+        except (TypeError, ValueError):
+            qty = item.quantity
     if qty <= 0:
         item.delete()
         messages.info(request, 'Позиция удалена из корзины.')
@@ -70,7 +76,6 @@ def cart_update(request, pk):
         else:
             item.quantity = qty
             item.save()
-            messages.success(request, 'Корзина обновлена.')
     return redirect('orders:cart')
 
 

@@ -3,6 +3,8 @@
 {% block body_class %}page-inner{% endblock %}
 {% block main_class %}container page-content{% endblock %}
 {% block content %}
+{% url 'orders:cart' as cart_url %}
+{% include "includes/back_link.html" with url=cart_url label="В корзину" %}
 <h1 class="h3 mb-3">Оформление заказа</h1>
 <div class="row g-4">
   <div class="col-lg-7">

@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Отчёт: расход{% endblock %}
 {% block content %}
+{% url 'reports:index' as back_url %}
+{% include "includes/back_link.html" with url=back_url label="К отчётам" %}
 <h1 class="h3">Расход</h1>
 <form class="row g-2 mb-3" method="get">
   <div class="col-auto"><input type="date" name="from" value="{{ date_from }}" class="form-control"></div>
@@ -8,7 +10,7 @@
   <div class="col-auto"><button class="btn btn-accent" type="submit">Показать</button></div>
   <div class="col-auto"><button class="btn btn-outline-secondary" name="export" value="xlsx" type="submit">Excel</button></div>
 </form>
-<table class="table table-sm bg-white">
+<table class="table table-sm">
   <thead><tr><th>Дата</th><th>№ заказа</th><th>Клиент</th><th>Артикул</th><th>Наименование</th><th>Кол-во</th><th>Цена ₽</th><th>Сумма ₽</th></tr></thead>
   <tbody>
   {% for row in rows %}
@@ -27,5 +29,4 @@
   {% endfor %}
   </tbody>
 </table>
-<a href="{% url 'reports:index' %}">← К отчётам</a>
 {% endblock %}

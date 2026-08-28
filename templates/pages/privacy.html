@@ -3,6 +3,8 @@
 {% block body_class %}page-inner{% endblock %}
 {% block main_class %}container page-content{% endblock %}
 {% block content %}
+{% url 'pages:home' as home_url %}
+{% include "includes/back_link.html" with url=home_url label="На главную" %}
 <article class="filters-panel">
   <h1 class="h3">Политика обработки персональных данных</h1>
   <p class="text-muted">Текст-заглушка. Приведите в соответствие с 152-ФЗ перед продакшеном.</p>

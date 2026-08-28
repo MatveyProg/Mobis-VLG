@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Приход #{{ stock_in.pk }} — {{ SHOP_NAME }}{% endblock %}
 {% block content %}
-<a href="{% url 'warehouse:stock_in_list' %}" class="text-decoration-none">← К приходам</a>
+{% url 'warehouse:stock_in_list' as back_url %}
+{% include "includes/back_link.html" with url=back_url label="К приходам" %}
 
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mt-2 mb-3">
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
   <div>
     <h1 class="h3 mb-1">Приход #{{ stock_in.pk }}</h1>
     {% if stock_in.is_posted %}
@@ -52,7 +53,7 @@
 
 <h2 class="h5">Строки</h2>
 <div class="table-responsive mb-3">
-  <table class="table table-sm bg-white align-middle">
+  <table class="table table-sm align-middle">
     <thead>
       <tr>
         <th>Артикул</th>

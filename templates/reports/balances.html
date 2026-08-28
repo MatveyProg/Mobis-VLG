@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 {% block title %}Отчёт: остатки{% endblock %}
 {% block content %}
+{% url 'reports:index' as back_url %}
+{% include "includes/back_link.html" with url=back_url label="К отчётам" %}
 <h1 class="h3">Остатки</h1>
 <form method="get" class="mb-3">
   <button class="btn btn-outline-secondary" name="export" value="xlsx" type="submit">Excel</button>
 </form>
-<table class="table table-sm bg-white">
+<table class="table table-sm">
   <thead>
     <tr>
       <th>Артикул</th><th>Наименование</th><th>Склад</th><th>Резерв</th><th>Доступно</th>
@@ -30,5 +32,4 @@
   {% endfor %}
   </tbody>
 </table>
-<a href="{% url 'reports:index' %}">← К отчётам</a>
 {% endblock %}

@@ -122,8 +122,15 @@ class OrderStatusHistory(models.Model):
         related_name='status_history',
         on_delete=models.CASCADE,
     )
-    previous_status = models.CharField(max_length=20, blank=True)
-    new_status = models.CharField(max_length=20)
+    previous_status = models.CharField(
+        max_length=20,
+        blank=True,
+        choices=Order.Status.choices,
+    )
+    new_status = models.CharField(
+        max_length=20,
+        choices=Order.Status.choices,
+    )
     changed_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

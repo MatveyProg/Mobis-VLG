@@ -3,6 +3,8 @@
 {% block body_class %}page-inner page-auth{% endblock %}
 {% block main_class %}container page-content{% endblock %}
 {% block content %}
+{% url 'pages:home' as home_url %}
+{% include "includes/back_link.html" with url=home_url label="На главную" %}
 <div class="row justify-content-center">
   <div class="col-md-5">
     <h1 class="h3 mb-3">Вход</h1>

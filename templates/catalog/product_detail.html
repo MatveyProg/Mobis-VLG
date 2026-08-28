@@ -4,6 +4,10 @@
 {% block body_class %}page-inner{% endblock %}
 {% block main_class %}container page-content{% endblock %}
 {% block content %}
+{% url 'catalog:product_list' as catalog_url %}
+{% with back_url=catalog_url|add:"?category="|add:product.category.slug %}
+{% include "includes/back_link.html" with url=back_url label="К каталогу" %}
+{% endwith %}
 <div class="row g-4">
   <div class="col-lg-6">
     {% with main=product.images.first %}

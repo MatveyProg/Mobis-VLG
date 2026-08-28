@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Импорт прихода — {{ SHOP_NAME }}{% endblock %}
 {% block content %}
-<a href="{% url 'warehouse:stock_in_list' %}" class="text-decoration-none">← К приходам</a>
-<h1 class="h3 mt-2 mb-3">Загрузить приход из Excel</h1>
+{% url 'warehouse:stock_in_list' as back_url %}
+{% include "includes/back_link.html" with url=back_url label="К приходам" %}
+<h1 class="h3 mb-3">Загрузить приход из Excel</h1>
 <p class="text-muted">
   Столбцы: 1 — номенклатурный номер (артикул), 2 — количество, 3 — цена закупки ₽.
   Первая строка с заголовками пропускается.

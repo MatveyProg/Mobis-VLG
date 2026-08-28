@@ -1,9 +1,20 @@
 {% extends "base.html" %}
 {% block title %}Заказ {{ order.number }} — {{ SHOP_NAME }}{% endblock %}
+{% block body_class %}page-inner{% endblock %}
+{% block main_class %}container page-content{% endblock %}
 {% block content %}
-<a href="{% url 'orders:order_list' %}" class="text-decoration-none">← К списку</a>
+{% url 'orders:order_list' as orders_url %}
+{% include "includes/back_link.html" with url=orders_url label="К списку заказов" %}
+
+{% if order.status == 'new' %}
+<div class="order-success-banner">
+  Заказ оформлен. Мы свяжемся с вами для согласования перевода.
+</div>
+{% endif %}
+
 <h1 class="h3 mt-2">Заказ {{ order.number }}</h1>
 <p>Статус: <strong>{{ order.get_status_display }}</strong> · {{ order.created_at|date:"d.m.Y H:i" }}</p>
+
 <div class="row g-4">
   <div class="col-md-6">
     <div class="filters-panel">
@@ -21,8 +32,8 @@
       <h2 class="h5">Состав</h2>
       <ul class="list-unstyled mb-3">
         {% for item in order.items.all %}
-          <li class="mb-2 d-flex justify-content-between">
-            <span>{{ item.product.sku }} — {{ item.product.name_ru }} × {{ item.quantity }}</span>
+          <li class="mb-2 d-flex justify-content-between gap-2">
+            <span>{{ item.product.sku }} — {{ item.product.display_name }} × {{ item.quantity }}</span>
             <strong>{{ item.line_total }} ₽</strong>
           </li>
         {% endfor %}
@@ -31,11 +42,12 @@
     </div>
   </div>
 </div>
+
 {% if order.status_history.all %}
   <h2 class="h5 mt-4">История статусов</h2>
-  <ul>
+  <ul class="order-history">
     {% for h in order.status_history.all %}
-      <li>{{ h.changed_at|date:"d.m.Y H:i" }} — {{ h.new_status }}</li>
+      <li>{{ h.changed_at|date:"d.m.Y H:i" }} — {{ h.get_new_status_display }}</li>
     {% endfor %}
   </ul>
 {% endif %}
