@@ -154,6 +154,8 @@ STORAGES = {
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+# На VPS без nginx location /media/ — True (по умолчанию). Если nginx отдаёт media — False в .env
+SERVE_MEDIA = os.getenv('DJANGO_SERVE_MEDIA', 'true').lower() in ('1', 'true', 'yes')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

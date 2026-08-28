@@ -4,7 +4,8 @@
     <article class="catalog-card">
       {% with img=product.images.first %}
         {% if img %}
-          <img src="{{ img.image.url }}" alt="{{ product.name_ru }}">
+          <img src="{{ img.image.url }}" alt="{{ product.display_name }}" loading="lazy"
+               onerror="this.onerror=null;this.src='{% static 'img/products/placeholder.png' %}';">
         {% else %}
           <img src="{% static 'img/products/placeholder.png' %}" alt="MOBIS-VLG">
         {% endif %}

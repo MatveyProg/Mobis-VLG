@@ -12,7 +12,8 @@
   <div class="col-lg-6">
     {% with main=product.images.first %}
       {% if main %}
-        <img id="mainImage" src="{{ main.image.url }}" class="img-fluid border" alt="{{ product.name_ru }}">
+        <img id="mainImage" src="{{ main.image.url }}" class="img-fluid border" alt="{{ product.display_name }}"
+             onerror="this.onerror=null;this.src='{% static 'img/products/placeholder.png' %}';">
       {% else %}
         <img src="{% static 'img/products/placeholder.png' %}" class="img-fluid border" alt="MOBIS-VLG">
       {% endif %}
