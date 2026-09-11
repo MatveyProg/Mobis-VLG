@@ -145,6 +145,39 @@ def post_stock_in(stock_in: StockIn, *, user=None):
     return stock_in
 
 
+@transaction.atomic
+def reverse_stock_in_on_delete(stock_in: StockIn, *, user=None):
+    """Снять со склада количество из проведённого прихода перед удалением документа."""
+    if stock_in.is_posted:
+        for item in stock_in.items.select_related('product'):
+            stock = _lock_stock(item.product_id)
+            deduct = min(stock.quantity_on_hand, item.quantity)
+            if not deduct:
+                continue
+            stock.quantity_on_hand = F('quantity_on_hand') - deduct
+            stock.save(update_fields=['quantity_on_hand'])
+            stock.refresh_from_db()
+            if stock.quantity_reserved > stock.quantity_on_hand:
+                stock.quantity_reserved = stock.quantity_on_hand
+                stock.save(update_fields=['quantity_reserved'])
+
+    StockMovement.objects.filter(stock_in=stock_in).delete()
+    return stock_in
+
+
+@transaction.atomic
+def reset_all_stock(*, clear_movements: bool = True) -> dict:
+    """Обнулить все остатки (и при необходимости очистить журнал движений)."""
+    updated = Stock.objects.update(quantity_on_hand=0, quantity_reserved=0)
+    movements_deleted = 0
+    if clear_movements:
+        movements_deleted, _ = StockMovement.objects.all().delete()
+    return {
+        'stocks_zeroed': updated,
+        'movements_deleted': movements_deleted,
+    }
+
+
 def notify_order_created(order):
     """Extension point for Telegram notifications in v2."""
     return None

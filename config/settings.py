@@ -72,7 +72,7 @@ INSTALLED_APPS = [
     'accounts',
     'catalog',
     'orders',
-    'warehouse',
+    'warehouse.apps.WarehouseConfig',
     'reports',
     'pages',
 ]
