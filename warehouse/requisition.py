@@ -6,7 +6,12 @@ from django.utils import timezone
 
 from orders.models import ClientRequest, ClientRequestItem, Order, OrderItem
 from catalog.models import Product
-from warehouse.models import PurchaseRequisition, PurchaseRequisitionItem, PurchaseRequisitionStatusHistory
+from warehouse.models import (
+    PurchaseRequisition,
+    PurchaseRequisitionItem,
+    PurchaseRequisitionStatusHistory,
+    StockOutItem,
+)
 
 
 def build_requisition_from_sales(*, date_from, date_to, user=None) -> PurchaseRequisition:
@@ -31,6 +36,18 @@ def build_requisition_from_sales(*, date_from, date_to, user=None) -> PurchaseRe
     )
     sales_by_product = {row['product_id']: row['qty'] for row in sales_rows}
 
+    out_rows = (
+        StockOutItem.objects.filter(
+            stock_out__is_posted=True,
+            stock_out__date__gte=start,
+            stock_out__date__lte=end,
+        )
+        .values('product_id')
+        .annotate(qty=Sum('quantity'))
+        .order_by()
+    )
+    out_by_product = {row['product_id']: row['qty'] for row in out_rows}
+
     preorder_items = list(
         ClientRequestItem.objects.filter(
             request__status=ClientRequest.Status.ACCEPTED,
@@ -41,7 +58,7 @@ def build_requisition_from_sales(*, date_from, date_to, user=None) -> PurchaseRe
     for item in preorder_items:
         pre_by_product[item.product_id].append(item)
 
-    product_ids = set(sales_by_product) | set(pre_by_product)
+    product_ids = set(sales_by_product) | set(pre_by_product) | set(out_by_product)
 
     requisition = PurchaseRequisition.objects.create(
         created_by=user,
@@ -57,6 +74,10 @@ def build_requisition_from_sales(*, date_from, date_to, user=None) -> PurchaseRe
         if sold:
             quantity += sold
             notes.append(f'продажи: {sold} шт')
+        written_off = out_by_product.get(product_id) or 0
+        if written_off:
+            quantity += written_off
+            notes.append(f'расход: {written_off} шт')
         for item in pre_by_product.get(product_id, []):
             quantity += item.quantity
             notes.append(f'{item.request.customer_display}: {item.quantity} шт')

@@ -7,8 +7,18 @@ from django.utils import timezone
 from accounts.models import User
 from catalog.models import Category, Product
 from orders.models import ClientRequest, ClientRequestItem, Order, OrderItem
-from warehouse.models import PurchaseRequisition, PurchaseRequisitionItem
+from warehouse.models import (
+    PurchaseRequisition,
+    PurchaseRequisitionItem,
+    Stock,
+    StockIn,
+    StockInItem,
+    StockOut,
+    StockOutItem,
+    Supplier,
+)
 from warehouse.requisition import build_requisition_from_sales, renumber_requisition_items
+from warehouse.services import post_stock_in, post_stock_out, unpost_stock_in, unpost_stock_out
 
 
 class RequisitionBuildTests(TestCase):
@@ -88,3 +98,43 @@ class RequisitionBuildTests(TestCase):
         self.assertEqual(remaining.pk, second.pk)
         self.assertEqual(remaining.line_number, 1)
         self.assertEqual(remaining.sum_rub, Decimal('60'))
+
+
+class StockDocumentTests(TestCase):
+    def setUp(self):
+        self.category = Category.objects.create(name='Оптика', slug='optika')
+        self.product = Product.objects.create(
+            sku='111111', name_ru='Фара', category=self.category, price_rub=1000,
+        )
+        self.admin = User.objects.create_user('admin', password='pass1234', is_staff=True)
+        self.supplier = Supplier.objects.create(name='Поставщик')
+        Stock.objects.filter(product=self.product).update(quantity_on_hand=0, quantity_reserved=0)
+
+    def test_stock_in_post_and_unpost(self):
+        doc = StockIn.objects.create(supplier=self.supplier, created_by=self.admin)
+        StockInItem.objects.create(
+            stock_in=doc, product=self.product, quantity=5, purchase_price_rub=Decimal('100'),
+        )
+        post_stock_in(doc, user=self.admin)
+        self.product.stock.refresh_from_db()
+        self.assertEqual(self.product.stock.quantity_on_hand, 5)
+        unpost_stock_in(doc, user=self.admin)
+        self.product.stock.refresh_from_db()
+        self.assertEqual(self.product.stock.quantity_on_hand, 0)
+        doc.refresh_from_db()
+        self.assertFalse(doc.is_posted)
+
+    def test_stock_out_post_and_unpost(self):
+        Stock.objects.filter(product=self.product).update(quantity_on_hand=4, quantity_reserved=0)
+        doc = StockOut.objects.create(created_by=self.admin, note='Продажа вне сайта')
+        StockOutItem.objects.create(
+            stock_out=doc, product=self.product, quantity=3, price_rub=Decimal('1000'),
+        )
+        post_stock_out(doc, user=self.admin)
+        self.product.stock.refresh_from_db()
+        self.assertEqual(self.product.stock.quantity_on_hand, 1)
+        unpost_stock_out(doc, user=self.admin)
+        self.product.stock.refresh_from_db()
+        self.assertEqual(self.product.stock.quantity_on_hand, 4)
+        doc.refresh_from_db()
+        self.assertFalse(doc.is_posted)

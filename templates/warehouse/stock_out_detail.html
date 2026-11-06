@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Расход #{{ stock_out.pk }} — {{ SHOP_NAME }}{% endblock %}
+{% block content %}
+{% url 'warehouse:stock_out_list' as back_url %}
+{% include "includes/back_link.html" with url=back_url label="К расходам" %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">Расход #{{ stock_out.pk }}</h1>
+    {% if stock_out.is_posted %}
+      <span class="badge text-bg-success">Проведён</span>
+    {% else %}
+      <span class="badge text-bg-warning">Черновик</span>
+    {% endif %}
+  </div>
+  <div class="d-flex gap-2">
+    {% if editable %}
+      <form method="post" action="{% url 'warehouse:stock_out_post' stock_out.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-accent" {% if not stock_out.items.all %}disabled{% endif %}>Провести</button>
+      </form>
+    {% else %}
+      <form method="post" action="{% url 'warehouse:stock_out_unpost' stock_out.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-danger">Отменить проведение</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if header_form %}
+<form method="post" class="filters-panel mb-3">
+  {% csrf_token %}
+  <input type="hidden" name="form" value="header">
+  <div class="row g-2">
+    <div class="col-md-4">
+      <label class="form-label">Дата</label>
+      {{ header_form.date }}
+    </div>
+    <div class="col-md-8">
+      <label class="form-label">Комментарий</label>
+      {{ header_form.note }}
+    </div>
+  </div>
+  <button type="submit" class="btn btn-sm btn-outline-secondary mt-2">Сохранить шапку</button>
+</form>
+{% else %}
+<div class="filters-panel mb-3">
+  <p class="mb-1"><strong>Дата:</strong> {{ stock_out.date|date:"d.m.Y H:i" }}</p>
+  {% if stock_out.note %}<p class="mb-0"><strong>Комментарий:</strong> {{ stock_out.note }}</p>{% endif %}
+</div>
+{% endif %}
+
+<h2 class="h5">Строки</h2>
+<div class="table-responsive mb-3">
+  <table class="table table-sm align-middle">
+    <thead>
+      <tr>
+        <th>Артикул</th>
+        <th>Наименование</th>
+        <th class="text-end">Кол-во</th>
+        <th class="text-end">Цена ₽</th>
+        <th class="text-end">Сумма ₽</th>
+        {% if editable %}<th></th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in stock_out.items.all %}
+        <tr>
+          <td>{{ item.product.sku }}</td>
+          <td>{{ item.product.display_name }}</td>
+          <td class="text-end">{{ item.quantity }}</td>
+          <td class="text-end">{{ item.price_rub }}</td>
+          <td class="text-end">{{ item.line_total }}</td>
+          {% if editable %}
+            <td>
+              <form method="post" action="{% url 'warehouse:stock_out_delete_item' stock_out.pk item.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">×</button>
+              </form>
+            </td>
+          {% endif %}
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="text-muted">Строк нет — добавьте товары перед проведением</td></tr>
+      {% endfor %}
+    </tbody>
+    {% if stock_out.items.all %}
+    <tfoot>
+      <tr class="table-light fw-semibold">
+        <td colspan="4" class="text-end">Итого:</td>
+        <td class="text-end">{{ total_rub }} ₽</td>
+        {% if editable %}<td></td>{% endif %}
+      </tr>
+    </tfoot>
+    {% endif %}
+  </table>
+</div>
+
+{% if editable %}
+<div class="filters-panel">
+  <h3 class="h6">Добавить строку</h3>
+  <p class="small text-muted mb-2">Цена подставляется из карточки товара, если не указать свою.</p>
+  <form method="post" action="{% url 'warehouse:stock_out_add_item' stock_out.pk %}" class="row g-2 align-items-end">
+    {% csrf_token %}
+    <div class="col-md-3">
+      <label class="form-label">{{ item_form.product_sku.label }}</label>
+      {{ item_form.product_sku }}
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">{{ item_form.quantity.label }}</label>
+      {{ item_form.quantity }}
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">{{ item_form.price_rub.label }}</label>
+      {{ item_form.price_rub }}
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-accent">Добавить</button>
+    </div>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

@@ -16,12 +16,16 @@ from warehouse.forms import (
     StockInHeaderForm,
     StockInImportForm,
     StockInItemForm,
+    StockOutHeaderForm,
+    StockOutItemForm,
 )
 from warehouse.models import (
     PurchaseRequisition,
     PurchaseRequisitionItem,
     StockIn,
     StockInItem,
+    StockOut,
+    StockOutItem,
     Supplier,
 )
 from warehouse.requisition import (
@@ -32,7 +36,13 @@ from warehouse.requisition import (
 )
 from warehouse.exports import export_requisition_xlsx
 from warehouse.import_stock_in import import_stock_in_items_from_xlsx
-from warehouse.services import StockError, post_stock_in
+from warehouse.services import (
+    StockError,
+    post_stock_in,
+    post_stock_out,
+    unpost_stock_in,
+    unpost_stock_out,
+)
 from warehouse.utils import get_product_by_sku
 
 
@@ -493,3 +503,151 @@ def stock_in_post(request, pk):
     except StockError as exc:
         messages.error(request, str(exc))
     return redirect('warehouse:stock_in_detail', pk=pk)
+
+
+@login_required
+@user_passes_test(staff_required)
+@require_POST
+def stock_in_unpost(request, pk):
+    stock_in = get_object_or_404(StockIn, pk=pk)
+    try:
+        unpost_stock_in(stock_in, user=request.user)
+        messages.success(request, f'Проведение прихода #{pk} отменено. Остатки возвращены.')
+    except StockError as exc:
+        messages.error(request, str(exc))
+    return redirect('warehouse:stock_in_detail', pk=pk)
+
+
+# --- Расходы ---
+
+
+@login_required
+@user_passes_test(staff_required)
+def stock_out_list(request):
+    posted = request.GET.get('posted', '')
+    qs = StockOut.objects.select_related('created_by').prefetch_related('items')
+    if posted == '1':
+        qs = qs.filter(is_posted=True)
+    elif posted == '0':
+        qs = qs.filter(is_posted=False)
+    return render(request, 'warehouse/stock_out_list.html', {
+        'stock_outs': qs,
+        'posted': posted,
+    })
+
+
+@login_required
+@user_passes_test(staff_required)
+def stock_out_create(request):
+    initial = {'date': timezone.localtime().replace(second=0, microsecond=0)}
+    form = StockOutHeaderForm(request.POST or None, initial=initial)
+    if request.method == 'POST' and form.is_valid():
+        stock_out = form.save(commit=False)
+        stock_out.created_by = request.user
+        stock_out.is_posted = False
+        stock_out.save()
+        messages.success(request, f'Создан расход #{stock_out.pk}. Добавьте строки.')
+        return redirect('warehouse:stock_out_detail', pk=stock_out.pk)
+    return render(request, 'warehouse/stock_out_form.html', {
+        'form': form,
+        'title': 'Новый расход',
+    })
+
+
+@login_required
+@user_passes_test(staff_required)
+def stock_out_detail(request, pk):
+    stock_out = get_object_or_404(
+        StockOut.objects.prefetch_related('items__product'),
+        pk=pk,
+    )
+    item_form = StockOutItemForm()
+    header_form = None
+    editable = not stock_out.is_posted
+    if editable:
+        header_form = StockOutHeaderForm(instance=stock_out)
+        if request.method == 'POST' and request.POST.get('form') == 'header':
+            header_form = StockOutHeaderForm(request.POST, instance=stock_out)
+            if header_form.is_valid():
+                header_form.save()
+                messages.success(request, 'Шапка расхода сохранена.')
+                return redirect('warehouse:stock_out_detail', pk=pk)
+    items = list(stock_out.items.all())
+    total_rub = sum((item.line_total for item in items), start=0)
+    return render(request, 'warehouse/stock_out_detail.html', {
+        'stock_out': stock_out,
+        'item_form': item_form,
+        'header_form': header_form,
+        'editable': editable,
+        'total_rub': total_rub,
+    })
+
+
+@login_required
+@user_passes_test(staff_required)
+@require_POST
+def stock_out_add_item(request, pk):
+    stock_out = get_object_or_404(StockOut, pk=pk)
+    if stock_out.is_posted:
+        messages.error(request, 'Проведённый документ нельзя изменять.')
+        return redirect('warehouse:stock_out_detail', pk=pk)
+    form = StockOutItemForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, 'Проверьте поля строки расхода.')
+        return redirect('warehouse:stock_out_detail', pk=pk)
+    try:
+        product = get_product_by_sku(form.cleaned_data['product_sku'])
+    except Exception as exc:  # noqa: BLE001
+        messages.error(request, str(exc))
+        return redirect('warehouse:stock_out_detail', pk=pk)
+    price = form.cleaned_data.get('price_rub')
+    if price is None:
+        price = product.price_rub
+    StockOutItem.objects.create(
+        stock_out=stock_out,
+        product=product,
+        quantity=form.cleaned_data['quantity'],
+        price_rub=price,
+    )
+    messages.success(request, f'Добавлен {product.sku}.')
+    return redirect('warehouse:stock_out_detail', pk=pk)
+
+
+@login_required
+@user_passes_test(staff_required)
+@require_POST
+def stock_out_delete_item(request, pk, item_pk):
+    stock_out = get_object_or_404(StockOut, pk=pk)
+    if stock_out.is_posted:
+        messages.error(request, 'Проведённый документ нельзя изменять.')
+        return redirect('warehouse:stock_out_detail', pk=pk)
+    item = get_object_or_404(StockOutItem, pk=item_pk, stock_out=stock_out)
+    item.delete()
+    messages.info(request, 'Строка удалена.')
+    return redirect('warehouse:stock_out_detail', pk=pk)
+
+
+@login_required
+@user_passes_test(staff_required)
+@require_POST
+def stock_out_post(request, pk):
+    stock_out = get_object_or_404(StockOut, pk=pk)
+    try:
+        post_stock_out(stock_out, user=request.user)
+        messages.success(request, f'Расход #{pk} проведён. Остатки списаны.')
+    except StockError as exc:
+        messages.error(request, str(exc))
+    return redirect('warehouse:stock_out_detail', pk=pk)
+
+
+@login_required
+@user_passes_test(staff_required)
+@require_POST
+def stock_out_unpost(request, pk):
+    stock_out = get_object_or_404(StockOut, pk=pk)
+    try:
+        unpost_stock_out(stock_out, user=request.user)
+        messages.success(request, f'Проведение расхода #{pk} отменено. Остатки возвращены.')
+    except StockError as exc:
+        messages.error(request, str(exc))
+    return redirect('warehouse:stock_out_detail', pk=pk)

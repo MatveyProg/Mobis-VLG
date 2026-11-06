@@ -1,6 +1,6 @@
 from django import forms
 
-from warehouse.models import PurchaseRequisition, StockIn, Supplier
+from warehouse.models import PurchaseRequisition, StockIn, StockOut, Supplier
 
 
 class RequisitionFromSalesForm(forms.Form):
@@ -148,3 +148,47 @@ class StockInImportForm(ExcelFileForm):
         self.fields['requisition'].queryset = PurchaseRequisition.objects.order_by('-created_at')
         self.fields['requisition'].empty_label = '— без заявки —'
         self.order_fields(['supplier', 'requisition', 'file'])
+
+
+class StockOutHeaderForm(forms.ModelForm):
+    class Meta:
+        model = StockOut
+        fields = ('date', 'note')
+        widgets = {
+            'date': forms.DateTimeInput(
+                attrs={'type': 'datetime-local', 'class': 'form-control'},
+                format='%Y-%m-%dT%H:%M',
+            ),
+            'note': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Продажа вне сайта, брак…'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['date'].input_formats = ['%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M']
+        self.fields['note'].required = False
+        if self.instance and self.instance.pk and self.instance.date:
+            from django.utils import timezone
+            self.initial.setdefault(
+                'date',
+                timezone.localtime(self.instance.date).strftime('%Y-%m-%dT%H:%M'),
+            )
+
+
+class StockOutItemForm(forms.Form):
+    product_sku = forms.CharField(
+        label='Артикул',
+        max_length=100,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ABC-123'}),
+    )
+    quantity = forms.IntegerField(
+        label='Количество',
+        min_value=1,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+    )
+    price_rub = forms.DecimalField(
+        label='Цена, ₽',
+        min_value=0,
+        required=False,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+    )

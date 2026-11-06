@@ -18,6 +18,11 @@
       {% csrf_token %}
       <button type="submit" class="btn btn-accent" {% if not stock_in.items.all %}disabled{% endif %}>Провести</button>
     </form>
+  {% else %}
+    <form method="post" action="{% url 'warehouse:stock_in_unpost' stock_in.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-danger">Отменить проведение</button>
+    </form>
   {% endif %}
 </div>
 

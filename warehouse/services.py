@@ -4,7 +4,7 @@ from django.db.models import F
 from django.utils import timezone
 
 from catalog.models import Product
-from warehouse.models import Stock, StockIn, StockMovement
+from warehouse.models import Stock, StockIn, StockMovement, StockOut
 
 
 class StockError(ValidationError):
@@ -146,23 +146,103 @@ def post_stock_in(stock_in: StockIn, *, user=None):
 
 
 @transaction.atomic
-def reverse_stock_in_on_delete(stock_in: StockIn, *, user=None):
-    """Снять со склада количество из проведённого прихода перед удалением документа."""
-    if stock_in.is_posted:
-        for item in stock_in.items.select_related('product'):
-            stock = _lock_stock(item.product_id)
-            deduct = min(stock.quantity_on_hand, item.quantity)
-            if not deduct:
-                continue
-            stock.quantity_on_hand = F('quantity_on_hand') - deduct
-            stock.save(update_fields=['quantity_on_hand'])
-            stock.refresh_from_db()
-            if stock.quantity_reserved > stock.quantity_on_hand:
-                stock.quantity_reserved = stock.quantity_on_hand
-                stock.save(update_fields=['quantity_reserved'])
-
-    StockMovement.objects.filter(stock_in=stock_in).delete()
+def unpost_stock_in(stock_in: StockIn, *, user=None):
+    """Отменить проведение прихода и вернуть остатки."""
+    if not stock_in.is_posted:
+        raise StockError('Документ ещё не проведён.')
+    for item in stock_in.items.select_related('product'):
+        stock = _lock_stock(item.product_id)
+        remaining_on_hand = stock.quantity_on_hand - item.quantity
+        if remaining_on_hand < 0:
+            raise StockError(
+                f'Нельзя отменить приход «{stock.product.sku}»: на складе {stock.quantity_on_hand} шт, '
+                f'нужно снять {item.quantity}.'
+            )
+        if remaining_on_hand < stock.quantity_reserved:
+            raise StockError(
+                f'Нельзя отменить приход «{stock.product.sku}»: после отмены остаток '
+                f'{remaining_on_hand} будет меньше резерва {stock.quantity_reserved}.'
+            )
+        stock.quantity_on_hand = F('quantity_on_hand') - item.quantity
+        stock.save(update_fields=['quantity_on_hand'])
+        StockMovement.objects.create(
+            product_id=item.product_id,
+            movement_type=StockMovement.MovementType.STORNO_IN,
+            quantity=item.quantity,
+            user=user,
+            stock_in=stock_in,
+            comment=f'Отмена проведения прихода #{stock_in.pk}',
+        )
+    stock_in.is_posted = False
+    stock_in.save(update_fields=['is_posted'])
     return stock_in
+
+
+@transaction.atomic
+def reverse_stock_in_on_delete(stock_in: StockIn, *, user=None):
+    """Перед удалением документа отменить проведение, если он проведён."""
+    if stock_in.is_posted:
+        unpost_stock_in(stock_in, user=user)
+    return stock_in
+
+
+@transaction.atomic
+def post_stock_out(stock_out: StockOut, *, user=None):
+    if stock_out.is_posted:
+        raise StockError('Документ уже проведён.')
+    if not stock_out.items.exists():
+        raise StockError('В расходе нет строк.')
+
+    for item in stock_out.items.select_related('product'):
+        stock = _lock_stock(item.product_id)
+        if stock.quantity_available < item.quantity:
+            raise StockError(
+                f'Недостаточно остатка для «{stock.product.sku}». '
+                f'Доступно: {stock.quantity_available}, запрошено: {item.quantity}.'
+            )
+        stock.quantity_on_hand = F('quantity_on_hand') - item.quantity
+        stock.save(update_fields=['quantity_on_hand'])
+        StockMovement.objects.create(
+            product_id=item.product_id,
+            movement_type=StockMovement.MovementType.OUT,
+            quantity=item.quantity,
+            user=user,
+            stock_out=stock_out,
+            comment=f'Расход #{stock_out.pk}',
+        )
+
+    stock_out.is_posted = True
+    stock_out.save(update_fields=['is_posted'])
+    return stock_out
+
+
+@transaction.atomic
+def unpost_stock_out(stock_out: StockOut, *, user=None):
+    """Отменить проведение расхода и вернуть остатки."""
+    if not stock_out.is_posted:
+        raise StockError('Документ ещё не проведён.')
+    for item in stock_out.items.select_related('product'):
+        stock = _lock_stock(item.product_id)
+        stock.quantity_on_hand = F('quantity_on_hand') + item.quantity
+        stock.save(update_fields=['quantity_on_hand'])
+        StockMovement.objects.create(
+            product_id=item.product_id,
+            movement_type=StockMovement.MovementType.STORNO_OUT,
+            quantity=item.quantity,
+            user=user,
+            stock_out=stock_out,
+            comment=f'Отмена проведения расхода #{stock_out.pk}',
+        )
+    stock_out.is_posted = False
+    stock_out.save(update_fields=['is_posted'])
+    return stock_out
+
+
+@transaction.atomic
+def reverse_stock_out_on_delete(stock_out: StockOut, *, user=None):
+    if stock_out.is_posted:
+        unpost_stock_out(stock_out, user=user)
+    return stock_out
 
 
 @transaction.atomic

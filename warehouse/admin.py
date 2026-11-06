@@ -11,10 +11,12 @@ from warehouse.models import (
     StockIn,
     StockInItem,
     StockMovement,
+    StockOut,
+    StockOutItem,
     Supplier,
 )
 from warehouse.requisition import build_requisition_from_sales
-from warehouse.services import StockError, post_stock_in
+from warehouse.services import StockError, post_stock_in, post_stock_out, unpost_stock_in, unpost_stock_out
 
 
 @admin.register(Supplier)
@@ -59,6 +61,7 @@ class StockMovementAdmin(admin.ModelAdmin):
         'comment',
         'order',
         'stock_in',
+        'stock_out',
     )
 
     def has_add_permission(self, request):
@@ -76,7 +79,7 @@ class StockInItemInline(admin.TabularInline):
 
 @admin.register(StockIn)
 class StockInAdmin(admin.ModelAdmin):
-    list_display = ('id', 'date', 'supplier', 'is_posted', 'requisition', 'post_button')
+    list_display = ('id', 'date', 'supplier', 'is_posted', 'requisition', 'action_button')
     list_filter = ('is_posted', 'supplier')
     inlines = [StockInItemInline]
     autocomplete_fields = ('supplier', 'requisition')
@@ -88,9 +91,12 @@ class StockInAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
     @admin.display(description='Действие')
-    def post_button(self, obj):
-        if obj.is_posted or not obj.pk:
-            return '—' if not obj.is_posted else 'Проведён'
+    def action_button(self, obj):
+        if not obj.pk:
+            return '—'
+        if obj.is_posted:
+            url = reverse('admin:warehouse_stockin_unpost', args=[obj.pk])
+            return format_html('<a class="button" href="{}">Отменить проведение</a>', url)
         url = reverse('admin:warehouse_stockin_post', args=[obj.pk])
         return format_html('<a class="button" href="{}">Провести</a>', url)
 
@@ -101,6 +107,11 @@ class StockInAdmin(admin.ModelAdmin):
                 '<int:pk>/post/',
                 self.admin_site.admin_view(self.post_view),
                 name='warehouse_stockin_post',
+            ),
+            path(
+                '<int:pk>/unpost/',
+                self.admin_site.admin_view(self.unpost_view),
+                name='warehouse_stockin_unpost',
             ),
         ]
         return custom + urls
@@ -113,6 +124,78 @@ class StockInAdmin(admin.ModelAdmin):
         except StockError as exc:
             self.message_user(request, str(exc), messages.ERROR)
         return redirect('admin:warehouse_stockin_change', pk)
+
+    def unpost_view(self, request, pk):
+        stock_in = StockIn.objects.get(pk=pk)
+        try:
+            unpost_stock_in(stock_in, user=request.user)
+            self.message_user(request, f'Проведение прихода #{pk} отменено.', messages.SUCCESS)
+        except StockError as exc:
+            self.message_user(request, str(exc), messages.ERROR)
+        return redirect('admin:warehouse_stockin_change', pk)
+
+
+class StockOutItemInline(admin.TabularInline):
+    model = StockOutItem
+    extra = 1
+    autocomplete_fields = ('product',)
+
+
+@admin.register(StockOut)
+class StockOutAdmin(admin.ModelAdmin):
+    list_display = ('id', 'date', 'note', 'is_posted', 'action_button')
+    list_filter = ('is_posted',)
+    inlines = [StockOutItemInline]
+    readonly_fields = ('is_posted', 'created_at', 'created_by')
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+
+    @admin.display(description='Действие')
+    def action_button(self, obj):
+        if not obj.pk:
+            return '—'
+        if obj.is_posted:
+            url = reverse('admin:warehouse_stockout_unpost', args=[obj.pk])
+            return format_html('<a class="button" href="{}">Отменить проведение</a>', url)
+        url = reverse('admin:warehouse_stockout_post', args=[obj.pk])
+        return format_html('<a class="button" href="{}">Провести</a>', url)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path(
+                '<int:pk>/post/',
+                self.admin_site.admin_view(self.post_view),
+                name='warehouse_stockout_post',
+            ),
+            path(
+                '<int:pk>/unpost/',
+                self.admin_site.admin_view(self.unpost_view),
+                name='warehouse_stockout_unpost',
+            ),
+        ]
+        return custom + urls
+
+    def post_view(self, request, pk):
+        stock_out = StockOut.objects.get(pk=pk)
+        try:
+            post_stock_out(stock_out, user=request.user)
+            self.message_user(request, f'Расход #{pk} проведён.', messages.SUCCESS)
+        except StockError as exc:
+            self.message_user(request, str(exc), messages.ERROR)
+        return redirect('admin:warehouse_stockout_change', pk)
+
+    def unpost_view(self, request, pk):
+        stock_out = StockOut.objects.get(pk=pk)
+        try:
+            unpost_stock_out(stock_out, user=request.user)
+            self.message_user(request, f'Проведение расхода #{pk} отменено.', messages.SUCCESS)
+        except StockError as exc:
+            self.message_user(request, str(exc), messages.ERROR)
+        return redirect('admin:warehouse_stockout_change', pk)
 
 
 class PurchaseRequisitionItemInline(admin.TabularInline):

@@ -55,6 +55,7 @@ class StockMovement(models.Model):
         OUT = 'OUT', 'Расход'
         RESERVE = 'RESERVE', 'Резерв'
         UNRESERVE = 'UNRESERVE', 'Снятие резерва'
+        STORNO_IN = 'STORNO_IN', 'Сторно прихода'
         STORNO_OUT = 'STORNO_OUT', 'Сторно расхода'
 
     product = models.ForeignKey(
@@ -85,6 +86,14 @@ class StockMovement(models.Model):
     stock_in = models.ForeignKey(
         'StockIn',
         verbose_name='Приход',
+        null=True,
+        blank=True,
+        related_name='stock_movements',
+        on_delete=models.SET_NULL,
+    )
+    stock_out = models.ForeignKey(
+        'StockOut',
+        verbose_name='Расход',
         null=True,
         blank=True,
         related_name='stock_movements',
@@ -169,6 +178,57 @@ class StockInItem(models.Model):
     @property
     def line_total(self):
         return self.quantity * self.purchase_price_rub
+
+
+class StockOut(models.Model):
+    date = models.DateTimeField('Дата', default=timezone.now)
+    is_posted = models.BooleanField('Проведён', default=False)
+    note = models.CharField('Комментарий', max_length=255, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name='Создал',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Расход'
+        verbose_name_plural = 'Расходы'
+        ordering = ['-date']
+
+    def __str__(self):
+        status = 'проведён' if self.is_posted else 'черновик'
+        return f'Расход #{self.pk} ({status})'
+
+
+class StockOutItem(models.Model):
+    stock_out = models.ForeignKey(
+        StockOut,
+        verbose_name='Расход',
+        related_name='items',
+        on_delete=models.CASCADE,
+    )
+    product = models.ForeignKey(Product, verbose_name='Товар', on_delete=models.PROTECT)
+    quantity = models.PositiveIntegerField('Количество')
+    price_rub = models.DecimalField(
+        'Цена, ₽',
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+    )
+
+    class Meta:
+        verbose_name = 'Строка расхода'
+        verbose_name_plural = 'Строки расхода'
+
+    def __str__(self):
+        return f'{self.product.sku} × {self.quantity}'
+
+    @property
+    def line_total(self):
+        return self.quantity * self.price_rub
 
 
 class PurchaseRequisition(models.Model):

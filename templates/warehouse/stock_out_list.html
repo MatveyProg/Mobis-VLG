@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Расходы — {{ SHOP_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="h3 mb-0">Расходы со склада</h1>
+  <div class="d-flex gap-2">
+    <a href="{% url 'warehouse:stock_out_create' %}" class="btn btn-accent btn-sm">+ Новый расход</a>
+    <a href="{% url 'warehouse:stock_in_list' %}" class="btn btn-outline-secondary btn-sm">Приходы</a>
+    <a href="{% url 'warehouse:stock_balances' %}" class="btn btn-outline-secondary btn-sm">Остатки</a>
+  </div>
+</div>
+
+<form method="get" class="mb-3 d-flex gap-2">
+  <select name="posted" class="form-select form-select-sm" style="max-width:200px">
+    <option value="">Все</option>
+    <option value="0" {% if posted == '0' %}selected{% endif %}>Черновики</option>
+    <option value="1" {% if posted == '1' %}selected{% endif %}>Проведённые</option>
+  </select>
+  <button class="btn btn-sm btn-outline-secondary" type="submit">Фильтр</button>
+</form>
+
+<div class="table-responsive">
+  <table class="table table-sm align-middle">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Дата</th>
+        <th>Комментарий</th>
+        <th>Статус</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for so in stock_outs %}
+        <tr>
+          <td>{{ so.pk }}</td>
+          <td>{{ so.date|date:"d.m.Y H:i" }}</td>
+          <td>{{ so.note|default:"—" }}</td>
+          <td>
+            {% if so.is_posted %}
+              <span class="badge text-bg-success">Проведён</span>
+            {% else %}
+              <span class="badge text-bg-warning">Черновик</span>
+            {% endif %}
+          </td>
+          <td><a href="{% url 'warehouse:stock_out_detail' so.pk %}">Открыть</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="text-muted">Расходов пока нет</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

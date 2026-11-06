@@ -33,4 +33,17 @@ urlpatterns = [
     ),
     path('stock-in/<int:pk>/import/', views.stock_in_import_items, name='stock_in_import_items'),
     path('stock-in/<int:pk>/post/', views.stock_in_post, name='stock_in_post'),
+    path('stock-in/<int:pk>/unpost/', views.stock_in_unpost, name='stock_in_unpost'),
+    # Расходы
+    path('stock-out/', views.stock_out_list, name='stock_out_list'),
+    path('stock-out/new/', views.stock_out_create, name='stock_out_create'),
+    path('stock-out/<int:pk>/', views.stock_out_detail, name='stock_out_detail'),
+    path('stock-out/<int:pk>/items/add/', views.stock_out_add_item, name='stock_out_add_item'),
+    path(
+        'stock-out/<int:pk>/items/<int:item_pk>/delete/',
+        views.stock_out_delete_item,
+        name='stock_out_delete_item',
+    ),
+    path('stock-out/<int:pk>/post/', views.stock_out_post, name='stock_out_post'),
+    path('stock-out/<int:pk>/unpost/', views.stock_out_unpost, name='stock_out_unpost'),
 ]

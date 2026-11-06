@@ -198,16 +198,17 @@ def report_movement(request):
 
         def net(qs):
             income = qs.filter(movement_type__in=['IN', 'STORNO_OUT']).aggregate(s=Sum('quantity'))['s'] or 0
-            outcome = qs.filter(movement_type='OUT').aggregate(s=Sum('quantity'))['s'] or 0
+            outcome = qs.filter(movement_type__in=['OUT', 'STORNO_IN']).aggregate(s=Sum('quantity'))['s'] or 0
             return income - outcome
 
         opening = net(before)
         income = period.filter(movement_type='IN').aggregate(s=Sum('quantity'))['s'] or 0
         outcome = period.filter(movement_type='OUT').aggregate(s=Sum('quantity'))['s'] or 0
         storno = period.filter(movement_type='STORNO_OUT').aggregate(s=Sum('quantity'))['s'] or 0
-        closing = opening + income - outcome + storno
+        storno_in = period.filter(movement_type='STORNO_IN').aggregate(s=Sum('quantity'))['s'] or 0
+        closing = opening + income - outcome + storno - storno_in
         reserved = p.stock.quantity_reserved if hasattr(p, 'stock') else 0
-        if opening or income or outcome or storno or closing:
+        if opening or income or outcome or storno or storno_in or closing:
             rows.append({
                 'sku': p.sku,
                 'name': p.name_ru,

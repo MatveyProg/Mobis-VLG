@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — {{ SHOP_NAME }}{% endblock %}
+{% block content %}
+{% url 'warehouse:stock_out_list' as back_url %}
+{% include "includes/back_link.html" with url=back_url label="К расходам" %}
+<h1 class="h3 mb-3">{{ title }}</h1>
+<p class="text-muted">Списание остатков при продаже вне сайта, порче или ином расходе.</p>
+<form method="post" class="filters-panel col-lg-6">
+  {% csrf_token %}
+  {% for field in form %}
+    <div class="mb-3">
+      <label class="form-label">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+    </div>
+  {% endfor %}
+  <button class="btn btn-accent" type="submit">Создать</button>
+</form>
+{% endblock %}
