@@ -20,6 +20,7 @@ def filter_products(queryset=None, *, q='', category=None, condition='', make_id
             Q(search_text__icontains=q_fold)
             | Q(name_ru__icontains=q)
             | Q(name_en__icontains=q)
+            | Q(description_ru__icontains=q)
             | Q(sku__icontains=q)
             | Q(sku_normalized__icontains=norm)
             | Q(cross_numbers__number__icontains=q)

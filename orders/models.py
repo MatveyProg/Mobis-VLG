@@ -182,3 +182,106 @@ class CartItem(models.Model):
     @property
     def line_total(self):
         return self.quantity * self.product.price_rub
+
+
+class ClientRequest(models.Model):
+    """Заявка клиента на отсутствующий товар (не корзина и не заказ со склада)."""
+
+    class Status(models.TextChoices):
+        DRAFT = 'draft', 'Черновик'
+        SUBMITTED = 'submitted', 'Отправлена'
+        ACCEPTED = 'accepted', 'Принята'
+        REJECTED = 'rejected', 'Отклонена'
+
+    number = models.CharField('Номер', max_length=32, unique=True, blank=True)
+    customer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name='Клиент',
+        related_name='client_requests',
+        on_delete=models.PROTECT,
+    )
+    status = models.CharField(
+        'Статус',
+        max_length=20,
+        choices=Status.choices,
+        default=Status.DRAFT,
+    )
+    comment = models.TextField('Комментарий', blank=True)
+    created_at = models.DateTimeField('Создана', auto_now_add=True)
+    submitted_at = models.DateTimeField('Отправлена', null=True, blank=True)
+    reviewed_at = models.DateTimeField('Рассмотрена', null=True, blank=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name='Рассмотрел',
+        null=True,
+        blank=True,
+        related_name='reviewed_client_requests',
+        on_delete=models.SET_NULL,
+    )
+    review_comment = models.CharField('Комментарий администратора', max_length=255, blank=True)
+
+    class Meta:
+        verbose_name = 'Заявка клиента'
+        verbose_name_plural = 'Заявки клиентов'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.number or f'Заявка #{self.pk}'
+
+    def save(self, *args, **kwargs):
+        creating = self.pk is None
+        super().save(*args, **kwargs)
+        if creating and not self.number:
+            year = timezone.localdate().year
+            seq = ClientRequest.objects.filter(number__startswith=f'ЗТ-{year}-').count() + 1
+            self.number = f'ЗТ-{year}-{seq:04d}'
+            super().save(update_fields=['number'])
+
+    @property
+    def total_quantity(self):
+        return sum(item.quantity for item in self.items.all())
+
+    @property
+    def total_rub(self):
+        return sum((item.line_total for item in self.items.select_related('product')), start=0)
+
+    @property
+    def customer_display(self):
+        name = self.customer.get_full_name()
+        return name or self.customer.username
+
+
+class ClientRequestItem(models.Model):
+    request = models.ForeignKey(
+        ClientRequest,
+        verbose_name='Заявка',
+        related_name='items',
+        on_delete=models.CASCADE,
+    )
+    product = models.ForeignKey(Product, verbose_name='Товар', on_delete=models.PROTECT)
+    quantity = models.PositiveIntegerField('Количество', default=1)
+    price_rub = models.DecimalField(
+        'Цена на момент заявки, ₽',
+        max_digits=12,
+        decimal_places=2,
+    )
+    allocated_requisition = models.ForeignKey(
+        'warehouse.PurchaseRequisition',
+        verbose_name='Включена в заявку на закупку',
+        null=True,
+        blank=True,
+        related_name='client_request_items',
+        on_delete=models.SET_NULL,
+    )
+
+    class Meta:
+        verbose_name = 'Строка заявки клиента'
+        verbose_name_plural = 'Строки заявок клиентов'
+        unique_together = [('request', 'product')]
+
+    def __str__(self):
+        return f'{self.product.sku} × {self.quantity}'
+
+    @property
+    def line_total(self):
+        return self.quantity * self.price_rub

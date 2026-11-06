@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Заявка на заказ — {{ SHOP_NAME }}{% endblock %}
+{% block body_class %}page-inner{% endblock %}
+{% block main_class %}container page-content{% endblock %}
+{% block content %}
+{% url 'catalog:product_list' as catalog_url %}
+{% include "includes/back_link.html" with url=catalog_url label="В каталог" %}
+<h1 class="h3 mb-3">Заявка на отсутствующий товар</h1>
+<p class="text-muted">Это не корзина: позиции будут отправлены администратору на согласование.</p>
+
+{% if items %}
+<div class="cart-list">
+  {% for item in items %}
+  <article class="cart-item">
+    <div class="cart-item__main">
+      <a href="{{ item.product.get_absolute_url }}" class="cart-item__name">{{ item.product.display_name }}</a>
+      <div class="cart-item__meta">
+        <span>{{ item.product.sku }}</span>
+        <span>{{ item.product.get_condition_display }}</span>
+      </div>
+      <div class="cart-item__price">{{ item.price_rub }} ₽ / шт</div>
+    </div>
+
+    <div class="cart-item__controls">
+      <form method="post" action="{% url 'orders:client_request_update_item' item.pk %}" class="cart-qty">
+        {% csrf_token %}
+        <button type="submit" name="action" value="dec" class="cart-qty__btn" aria-label="Уменьшить количество"{% if item.quantity <= 1 %} disabled{% endif %}>−</button>
+        <span class="cart-qty__value">{{ item.quantity }}</span>
+        <button type="submit" name="action" value="inc" class="cart-qty__btn" aria-label="Увеличить количество">+</button>
+      </form>
+
+      <form method="post" action="{% url 'orders:client_request_remove_item' item.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="cart-qty__remove" aria-label="Удалить из заявки">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </button>
+      </form>
+    </div>
+
+    <div class="cart-item__total">{{ item.line_total }} ₽</div>
+  </article>
+  {% endfor %}
+</div>
+
+<form method="post" class="cart-summary">
+  {% csrf_token %}
+  <label class="form-label">Комментарий к заявке</label>
+  <textarea name="comment" class="form-control mb-3" rows="2">{{ client_request.comment }}</textarea>
+  <div class="cart-summary__total">Итого: {{ client_request.total_rub }} ₽</div>
+  <button type="submit" class="btn btn-accent btn-lg">Отправить заявку</button>
+</form>
+{% else %}
+<p class="text-muted">Заявка пуста. Если товара нет в наличии, на карточке нажмите «Заказать».</p>
+{% endif %}
+{% endblock %}

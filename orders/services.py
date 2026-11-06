@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from orders.models import Order, OrderItem, OrderStatusHistory
+from orders.models import ClientRequest, ClientRequestItem, Order, OrderItem, OrderStatusHistory
 from warehouse import services as stock_services
 from warehouse.services import StockError, notify_order_created
 
@@ -116,3 +116,71 @@ def change_order_status(order: Order, new_status: str, *, user=None) -> Order:
         user=user,
     )
     return order
+
+
+def get_draft_request(user) -> ClientRequest:
+    draft = (
+        ClientRequest.objects.filter(customer=user, status=ClientRequest.Status.DRAFT)
+        .order_by('-created_at')
+        .first()
+    )
+    if draft:
+        return draft
+    return ClientRequest.objects.create(customer=user, status=ClientRequest.Status.DRAFT)
+
+
+@transaction.atomic
+def add_to_client_request(*, user, product, quantity: int) -> ClientRequest:
+    if quantity < 1:
+        raise OrderError('Укажите количество.')
+    if not product.is_active:
+        raise OrderError(f'Товар «{product.sku}» недоступен.')
+    if not product.allow_preorder:
+        raise OrderError(f'Товар «{product.sku}» нельзя заказать при нулевом остатке.')
+    if product.quantity_available > 0:
+        raise OrderError('Товар есть в наличии — добавьте его в корзину.')
+
+    request = get_draft_request(user)
+    item, created = ClientRequestItem.objects.get_or_create(
+        request=request,
+        product=product,
+        defaults={'quantity': quantity, 'price_rub': product.price_rub},
+    )
+    if not created:
+        item.quantity += quantity
+        item.price_rub = product.price_rub
+        item.save(update_fields=['quantity', 'price_rub'])
+    return request
+
+
+@transaction.atomic
+def submit_client_request(request_obj: ClientRequest) -> ClientRequest:
+    if request_obj.status != ClientRequest.Status.DRAFT:
+        raise OrderError('Отправить можно только черновик заявки.')
+    if not request_obj.items.exists():
+        raise OrderError('Добавьте хотя бы одну позицию.')
+    request_obj.status = ClientRequest.Status.SUBMITTED
+    request_obj.submitted_at = timezone.now()
+    request_obj.save(update_fields=['status', 'submitted_at'])
+    return request_obj
+
+
+@transaction.atomic
+def review_client_request(
+    request_obj: ClientRequest,
+    *,
+    accept: bool,
+    user=None,
+    comment: str = '',
+) -> ClientRequest:
+    if request_obj.status != ClientRequest.Status.SUBMITTED:
+        raise OrderError('Рассмотреть можно только отправленную заявку.')
+    request_obj.status = (
+        ClientRequest.Status.ACCEPTED if accept else ClientRequest.Status.REJECTED
+    )
+    request_obj.reviewed_at = timezone.now()
+    request_obj.reviewed_by = user
+    request_obj.review_comment = (comment or '').strip()
+    request_obj.save(update_fields=['status', 'reviewed_at', 'reviewed_by', 'review_comment'])
+    return request_obj
+

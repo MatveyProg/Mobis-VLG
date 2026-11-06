@@ -3,7 +3,15 @@ from django.utils.html import format_html
 
 from orders.services import OrderError, change_order_status
 
-from .models import Cart, CartItem, Order, OrderItem, OrderStatusHistory
+from .models import (
+    Cart,
+    CartItem,
+    ClientRequest,
+    ClientRequestItem,
+    Order,
+    OrderItem,
+    OrderStatusHistory,
+)
 
 
 class OrderItemInline(admin.TabularInline):
@@ -107,3 +115,18 @@ class CartItemInline(admin.TabularInline):
 class CartAdmin(admin.ModelAdmin):
     list_display = ('user', 'updated_at')
     inlines = [CartItemInline]
+
+
+class ClientRequestItemInline(admin.TabularInline):
+    model = ClientRequestItem
+    extra = 0
+    autocomplete_fields = ('product',)
+
+
+@admin.register(ClientRequest)
+class ClientRequestAdmin(admin.ModelAdmin):
+    list_display = ('number', 'customer', 'status', 'created_at', 'submitted_at')
+    list_filter = ('status',)
+    search_fields = ('number', 'customer__username', 'customer__first_name', 'customer__last_name')
+    inlines = [ClientRequestItemInline]
+    readonly_fields = ('number', 'created_at', 'submitted_at', 'reviewed_at')

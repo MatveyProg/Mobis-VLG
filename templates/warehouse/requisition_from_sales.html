@@ -4,7 +4,7 @@
 {% url 'warehouse:requisition_list' as back_url %}
 {% include "includes/back_link.html" with url=back_url label="К заявкам" %}
 <h1 class="h3 mb-3">Создать заявку по расходу</h1>
-<p class="text-muted">Подтянутся товары из подтверждённых заказов за выбранный период.</p>
+<p class="text-muted">Подтянутся продажи за период и принятые заявки клиентов. Одинаковые артикулы схлопываются в одну строку с пометкой, кому сколько.</p>
 <form method="post" class="filters-panel col-md-6">
   {% csrf_token %}
   {% for field in form %}

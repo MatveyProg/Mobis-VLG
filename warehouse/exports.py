@@ -29,7 +29,8 @@ def export_requisition_xlsx(requisition: PurchaseRequisition) -> HttpResponse:
         'Цена ₩/ед',
         'Сумма ₩',
         'Цена ₽/ед',
-        'Сумма ₽',
+        'Всего сумма в руб',
+        'Состав количества',
     ]
     ws.append(headers)
     for cell in ws[ws.max_row]:
@@ -51,6 +52,7 @@ def export_requisition_xlsx(requisition: PurchaseRequisition) -> HttpResponse:
             float(sum_krw),
             float(item.purchase_price_rub),
             float(sum_rub),
+            item.source_note,
         ])
 
     ws.append([])

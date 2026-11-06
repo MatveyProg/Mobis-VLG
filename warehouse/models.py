@@ -236,6 +236,11 @@ class PurchaseRequisitionItem(models.Model):
         decimal_places=2,
         default=0,
     )
+    source_note = models.TextField(
+        'Состав количества',
+        blank=True,
+        help_text='Кто сколько заказал и сколько ушло в расход',
+    )
 
     class Meta:
         verbose_name = 'Строка заявки'

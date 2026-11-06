@@ -7,8 +7,16 @@ from django.views.generic import DetailView, FormView, ListView
 
 from catalog.models import Product
 from orders.forms import AddToCartForm, CheckoutForm
-from orders.models import Cart, CartItem, Order
-from orders.services import OrderError, change_order_status, create_order_from_cart
+from orders.models import Cart, CartItem, ClientRequest, ClientRequestItem, Order
+from orders.services import (
+    OrderError,
+    add_to_client_request,
+    change_order_status,
+    create_order_from_cart,
+    get_draft_request,
+    review_client_request,
+    submit_client_request,
+)
 from warehouse.services import StockError
 
 
@@ -214,3 +222,162 @@ def active_order_set_status(request, pk):
     except OrderError as exc:
         messages.error(request, str(exc))
     return redirect('orders:active_orders')
+
+
+@login_required
+@require_POST
+def client_request_add(request, pk):
+    if request.user.is_staff:
+        messages.info(request, 'Администратор оформляет заявки через админку.')
+        return redirect('catalog:product_list')
+    product = get_object_or_404(Product, pk=pk, is_active=True)
+    form = AddToCartForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, 'Некорректное количество.')
+        return redirect(product.get_absolute_url())
+    try:
+        add_to_client_request(
+            user=request.user,
+            product=product,
+            quantity=form.cleaned_data['quantity'],
+        )
+    except OrderError as exc:
+        messages.error(request, str(exc))
+        return redirect(product.get_absolute_url())
+    messages.success(request, f'«{product.display_name}» добавлен в заявку.')
+    return redirect('orders:client_request_draft')
+
+
+@login_required
+def client_request_draft(request):
+    if request.user.is_staff:
+        return redirect('orders:client_request_inbox')
+    draft = get_draft_request(request.user)
+    items = draft.items.select_related('product', 'product__stock')
+    if request.method == 'POST':
+        draft.comment = request.POST.get('comment', '').strip()
+        draft.save(update_fields=['comment'])
+        try:
+            submit_client_request(draft)
+        except OrderError as exc:
+            messages.error(request, str(exc))
+            return redirect('orders:client_request_draft')
+        messages.success(request, f'Заявка {draft.number} отправлена.')
+        return redirect('orders:client_request_detail', pk=draft.pk)
+    return render(request, 'orders/client_request_draft.html', {
+        'client_request': draft,
+        'items': items,
+    })
+
+
+@login_required
+@require_POST
+def client_request_update_item(request, pk):
+    draft = get_draft_request(request.user)
+    item = get_object_or_404(ClientRequestItem, pk=pk, request=draft)
+    action = request.POST.get('action')
+    if action == 'inc':
+        qty = item.quantity + 1
+    elif action == 'dec':
+        qty = item.quantity - 1
+    else:
+        try:
+            qty = int(request.POST.get('quantity', item.quantity))
+        except (TypeError, ValueError):
+            qty = item.quantity
+    if qty <= 0:
+        item.delete()
+        messages.info(request, 'Позиция удалена из заявки.')
+    else:
+        item.quantity = qty
+        item.save(update_fields=['quantity'])
+    return redirect('orders:client_request_draft')
+
+
+@login_required
+@require_POST
+def client_request_remove_item(request, pk):
+    draft = get_draft_request(request.user)
+    item = get_object_or_404(ClientRequestItem, pk=pk, request=draft)
+    item.delete()
+    messages.info(request, 'Позиция удалена.')
+    return redirect('orders:client_request_draft')
+
+
+class ClientRequestListView(LoginRequiredMixin, ListView):
+    template_name = 'orders/client_request_list.html'
+    context_object_name = 'requests'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.user.is_staff:
+            return redirect('orders:client_request_inbox')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return (
+            ClientRequest.objects.filter(customer=self.request.user)
+            .exclude(status=ClientRequest.Status.DRAFT)
+            .prefetch_related('items__product')
+        )
+
+
+class ClientRequestDetailView(LoginRequiredMixin, DetailView):
+    template_name = 'orders/client_request_detail.html'
+    context_object_name = 'client_request'
+
+    def get_queryset(self):
+        qs = ClientRequest.objects.prefetch_related('items__product')
+        if self.request.user.is_staff:
+            return qs
+        return qs.filter(customer=self.request.user)
+
+
+class ClientRequestInboxView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    template_name = 'orders/client_request_inbox.html'
+    context_object_name = 'requests'
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get_queryset(self):
+        status = self.request.GET.get('status', ClientRequest.Status.SUBMITTED)
+        qs = (
+            ClientRequest.objects.exclude(status=ClientRequest.Status.DRAFT)
+            .select_related('customer', 'reviewed_by')
+            .prefetch_related('items__product')
+            .order_by('-submitted_at', '-created_at')
+        )
+        if status:
+            qs = qs.filter(status=status)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['status'] = self.request.GET.get('status', ClientRequest.Status.SUBMITTED)
+        ctx['status_choices'] = [
+            choice for choice in ClientRequest.Status.choices
+            if choice[0] != ClientRequest.Status.DRAFT
+        ]
+        return ctx
+
+
+@login_required
+@user_passes_test(staff_required)
+@require_POST
+def client_request_review(request, pk):
+    client_request = get_object_or_404(ClientRequest, pk=pk)
+    accept = request.POST.get('decision') == 'accept'
+    try:
+        review_client_request(
+            client_request,
+            accept=accept,
+            user=request.user,
+            comment=request.POST.get('review_comment', ''),
+        )
+        messages.success(
+            request,
+            f'Заявка {client_request.number}: «{client_request.get_status_display()}».',
+        )
+    except OrderError as exc:
+        messages.error(request, str(exc))
+    return redirect('orders:client_request_inbox')

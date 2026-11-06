@@ -1,20 +1,21 @@
+from collections import defaultdict
 from datetime import datetime, time
 
 from django.db.models import Sum
 from django.utils import timezone
 
-from orders.models import Order, OrderItem
+from orders.models import ClientRequest, ClientRequestItem, Order, OrderItem
 from catalog.models import Product
 from warehouse.models import PurchaseRequisition, PurchaseRequisitionItem, PurchaseRequisitionStatusHistory
 
 
 def build_requisition_from_sales(*, date_from, date_to, user=None) -> PurchaseRequisition:
-    """Create purchase requisition lines from confirmed sales in period."""
+    """Create purchase requisition lines from confirmed sales and accepted client requests."""
     tz = timezone.get_current_timezone()
     start = timezone.make_aware(datetime.combine(date_from, time.min), tz)
     end = timezone.make_aware(datetime.combine(date_to, time.max), tz)
 
-    qs = (
+    sales_rows = (
         OrderItem.objects.filter(
             order__status__in=[
                 Order.Status.CONFIRMED,
@@ -28,23 +29,61 @@ def build_requisition_from_sales(*, date_from, date_to, user=None) -> PurchaseRe
         .annotate(qty=Sum('quantity'))
         .order_by()
     )
+    sales_by_product = {row['product_id']: row['qty'] for row in sales_rows}
+
+    preorder_items = list(
+        ClientRequestItem.objects.filter(
+            request__status=ClientRequest.Status.ACCEPTED,
+            allocated_requisition__isnull=True,
+        ).select_related('request', 'request__customer', 'product')
+    )
+    pre_by_product: dict[int, list[ClientRequestItem]] = defaultdict(list)
+    for item in preorder_items:
+        pre_by_product[item.product_id].append(item)
+
+    product_ids = set(sales_by_product) | set(pre_by_product)
 
     requisition = PurchaseRequisition.objects.create(
         created_by=user,
         status=PurchaseRequisition.Status.CREATED,
-        note=f'Автоформирование по расходу {date_from} — {date_to}',
+        note=f'Автоформирование по расходу {date_from} — {date_to} и принятым заявкам клиентов',
     )
-    for i, row in enumerate(qs, start=1):
-        product = Product.objects.get(pk=row['product_id'])
+
+    for line_no, product_id in enumerate(sorted(product_ids), start=1):
+        product = Product.objects.get(pk=product_id)
+        notes = []
+        quantity = 0
+        sold = sales_by_product.get(product_id) or 0
+        if sold:
+            quantity += sold
+            notes.append(f'продажи: {sold} шт')
+        for item in pre_by_product.get(product_id, []):
+            quantity += item.quantity
+            notes.append(f'{item.request.customer_display}: {item.quantity} шт')
         PurchaseRequisitionItem.objects.create(
             requisition=requisition,
-            line_number=i,
+            line_number=line_no,
             product=product,
-            quantity=row['qty'],
+            quantity=quantity,
             purchase_price_krw=product.purchase_price_krw,
             purchase_price_rub=product.purchase_price_rub,
+            source_note='; '.join(notes),
         )
+
+    if preorder_items:
+        ClientRequestItem.objects.filter(
+            pk__in=[item.pk for item in preorder_items],
+        ).update(allocated_requisition=requisition)
+
     return requisition
+
+
+def renumber_requisition_items(requisition: PurchaseRequisition) -> None:
+    items = list(requisition.items.order_by('line_number', 'id'))
+    for index, item in enumerate(items, start=1):
+        if item.line_number != index:
+            item.line_number = index
+            item.save(update_fields=['line_number'])
 
 
 REQUISITION_TRANSITIONS = {

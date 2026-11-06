@@ -1,4 +1,9 @@
-"""Import products from Excel (.xlsx). First row = headers (skipped as data)."""
+"""Import products from Excel (.xlsx). First row = headers (skipped as data).
+
+Standard column order (1-based):
+1 артикул, 2 кросс-номер, 3 количество в машине, 4 наименование англ,
+5 наименование на русском, 6 цена продажи, 7 цена закупки руб, 8 цена W, 9 вес.
+"""
 
 from __future__ import annotations
 
@@ -8,10 +13,22 @@ from typing import Any
 
 from django.db import transaction
 
-from catalog.models import Category, Product
+from catalog.models import Category, Product, ProductCrossNumber
 from catalog.utils import normalize_code
 
 DEFAULT_CATEGORY = 'Импорт'
+
+STANDARD_FIELDS = (
+    'sku',
+    'cross_number',
+    'quantity_in_car',
+    'name_en',
+    'name_ru',
+    'price_rub',
+    'purchase_price_rub',
+    'purchase_price_krw',
+    'weight',
+)
 
 
 def _norm_header(value: Any) -> str:
@@ -27,30 +44,38 @@ HEADER_MAP = {
     'sku': {
         'артикул', 'sku', 'номенклатурный номер', 'номер детали', 'part number',
     },
+    'cross_number': {
+        'кросс-номер', 'кросс номер', 'кросс', 'cross', 'cross number',
+        'кросс номер', 'ое', 'oe', 'oem',
+    },
     'name_ru': {
         'наименование (рус)', 'наименование рус', 'название (рус)', 'name ru',
-        'русское название', 'russian name',
+        'русское название', 'russian name', 'наименование на русском',
+        'наименование русское',
     },
     'name_en': {
         'наименование (англ)', 'наименование англ', 'наименование eng',
         'название (англ)', 'name en', 'english name', 'part name',
+        'наименование английское',
     },
     'category': {'категория', 'category', 'группа'},
     'condition': {'состояние', 'condition'},
     'price_rub': {
         'цена продажи', 'цена продажи руб', 'цена продажи, rub',
-        'продажа руб',
+        'продажа руб', 'цена',
     },
     'purchase_price_krw': {
         'цена закупки w', 'цена закупки вон', 'цена w',
-        'закупка w', 'цена закупки, w',
+        'закупка w', 'цена закупки, w', 'цена w',
     },
     'purchase_price_rub': {
         'цена закупки руб', 'закупка руб', 'цена закупки, rub',
+        'цена закупки rub',
     },
     'weight': {'вес', 'weight', 'вес кг', 'вес, кг'},
     'quantity_in_car': {
         'количество в машине', 'кол-во в машине', 'кол во в машине', 'qty in car',
+        'кол-во',
     },
     'description_ru': {'описание (рус)', 'описание'},
 }
@@ -75,12 +100,42 @@ def _name_lang_hint(header: str) -> str | None:
     return None
 
 
+def _is_standard_layout(headers: list[Any]) -> bool:
+    """Fixed 9-column shop template: артикул | кросс | кол-во в машине | англ | рус | ..."""
+    if len(headers) < 9:
+        return False
+    first = _norm_header(headers[0])
+    second = _norm_header(headers[1])
+    sku_ok = 'артикул' in first or first in {'sku', 'part number'}
+    if not sku_ok:
+        return False
+    cross_ok = 'кросс' in second or 'cross' in second or second == ''
+    return bool(cross_ok or True)
+
+
 def _build_column_index(headers: list[Any]) -> dict[str, int]:
+    if _is_standard_layout(headers):
+        mapping = {field: idx for idx, field in enumerate(STANDARD_FIELDS)}
+        extra = _build_header_mapping(headers, skip_indices=set(range(9)))
+        extra.update(mapping)
+        return extra
+
+    mapping = _build_header_mapping(headers)
+    if 'sku' not in mapping:
+        raise ValueError(
+            'Не найден столбец «Артикул». Проверьте заголовки первой строки файла.'
+        )
+    return mapping
+
+
+def _build_header_mapping(headers: list[Any], skip_indices: set[int] | None = None) -> dict[str, int]:
     mapping: dict[str, int] = {}
-    used_cols: set[int] = set()
+    used_cols: set[int] = set(skip_indices or ())
     normalized = [_norm_header(h) for h in headers]
 
     for idx, header in enumerate(normalized):
+        if idx in used_cols:
+            continue
         hinted = _name_lang_hint(header)
         if hinted and hinted not in mapping:
             mapping[hinted] = idx
@@ -107,7 +162,6 @@ def _build_column_index(headers: list[Any]) -> dict[str, int]:
         mapping[field] = idx
         used_cols.add(idx)
 
-    # Generic single "Наименование" / "Name" column, if language not specified.
     if 'name_ru' not in mapping and 'name_en' not in mapping:
         for idx, header in enumerate(normalized):
             if idx in used_cols:
@@ -116,10 +170,6 @@ def _build_column_index(headers: list[Any]) -> dict[str, int]:
                 mapping['name_generic'] = idx
                 break
 
-    if 'sku' not in mapping:
-        raise ValueError(
-            'Не найден столбец «Артикул». Проверьте заголовки первой строки файла.'
-        )
     return mapping
 
 
@@ -170,6 +220,43 @@ def _get_or_create_category(name: str | None) -> Category:
         defaults={'slug': ''},
     )
     return category
+
+
+def _split_cross_numbers(value) -> list[str]:
+    if value is None or value == '':
+        return []
+    text = str(value).strip()
+    if not text:
+        return []
+    parts = re.split(r'[,;/|]+', text)
+    seen = set()
+    result = []
+    for part in parts:
+        number = part.strip()
+        if not number:
+            continue
+        key = normalize_code(number)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        result.append(number)
+    return result
+
+
+def _sync_cross_numbers(product: Product, numbers: list[str]) -> None:
+    existing = {
+        item.number_normalized: item
+        for item in product.cross_numbers.all()
+    }
+    for number in numbers:
+        norm = normalize_code(number)
+        current = existing.pop(norm, None)
+        if current is None:
+            ProductCrossNumber.objects.create(product=product, number=number)
+        elif current.number != number:
+            current.number = number
+            current.save(update_fields=['number', 'number_normalized'])
+    product.save()
 
 
 @transaction.atomic
@@ -223,17 +310,14 @@ def import_products_from_xlsx(file_obj) -> dict[str, Any]:
             if weight_val not in (None, ''):
                 defaults['weight'] = _to_decimal(weight_val)
             if col.get('quantity_in_car') is not None:
-                defaults['quantity_in_car'] = max(
-                    _to_int(_cell(row, col.get('quantity_in_car')), default=1),
-                    1,
-                )
+                qty_in_car = _to_int(_cell(row, col.get('quantity_in_car')), default=1)
+                defaults['quantity_in_car'] = max(qty_in_car, 1)
 
             product, was_created = Product.objects.update_or_create(
                 sku=sku,
                 defaults=defaults,
             )
-            product.sku_normalized = normalize_code(sku)
-            product.save(update_fields=['sku_normalized'])
+            _sync_cross_numbers(product, _split_cross_numbers(_cell(row, col.get('cross_number'))))
             if was_created:
                 created += 1
             else:

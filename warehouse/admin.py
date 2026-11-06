@@ -126,6 +126,7 @@ class PurchaseRequisitionItemInline(admin.TabularInline):
         'quantity',
         'purchase_price_krw',
         'purchase_price_rub',
+        'source_note',
         'received_display',
         'remaining_display',
     )

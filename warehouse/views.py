@@ -27,6 +27,7 @@ from warehouse.models import (
 from warehouse.requisition import (
     REQUISITION_TRANSITIONS,
     build_requisition_from_sales,
+    renumber_requisition_items,
     set_requisition_status,
 )
 from warehouse.exports import export_requisition_xlsx
@@ -242,7 +243,15 @@ def requisition_delete_item(request, pk, item_pk):
         return redirect('warehouse:requisition_detail', pk=pk)
     item = get_object_or_404(PurchaseRequisitionItem, pk=item_pk, requisition=requisition)
     sku = item.product.sku
+    product = item.product
     item.delete()
+    if not requisition.items.filter(product=product).exists():
+        from orders.models import ClientRequestItem
+        ClientRequestItem.objects.filter(
+            allocated_requisition=requisition,
+            product=product,
+        ).update(allocated_requisition=None)
+    renumber_requisition_items(requisition)
     messages.info(request, f'Строка {sku} удалена.')
     return redirect('warehouse:requisition_detail', pk=pk)
 

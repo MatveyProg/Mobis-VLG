@@ -88,9 +88,10 @@ class ProductAdmin(admin.ModelAdmin):
         'weight',
         'quantity_in_car',
         'stock_available',
+        'allow_preorder',
         'is_active',
     )
-    list_filter = ('is_active', 'condition', 'category', StockAvailableFilter)
+    list_filter = ('is_active', 'allow_preorder', 'condition', 'category', StockAvailableFilter)
     search_fields = ('sku', 'name_ru', 'name_en', 'sku_normalized', 'search_text', 'cross_numbers__number')
     inlines = [ProductImageInline, ProductCrossNumberInline, ProductVehicleInline]
     autocomplete_fields = ('category',)
@@ -98,7 +99,8 @@ class ProductAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': (
-                'sku', 'name_ru', 'name_en', 'category', 'condition', 'is_active',
+                'sku', 'name_ru', 'name_en', 'category', 'condition',
+                'allow_preorder', 'is_active',
             ),
         }),
         ('Цены', {
@@ -157,9 +159,10 @@ class ProductAdmin(admin.ModelAdmin):
             'title': 'Импорт товаров из Excel',
             'opts': self.model._meta,
             'expected_columns': [
-                'Артикул', 'Наименование (рус)', 'Наименование (англ)', 'Категория',
-                'Состояние', 'Цена продажи, ₽', 'Цена закупки, ₩', 'Цена закупки, ₽',
-                'Вес', 'Количество в машине', 'Описание',
+                '1. Артикул', '2. Кросс-номер', '3. Количество в машине',
+                '4. Наименование англ', '5. Наименование на русском',
+                '6. Цена продажи', '7. Цена закупки руб', '8. Цена W', '9. Вес',
+                '(первая строка — заголовки)',
             ],
         }
         return render(request, 'admin/catalog/product/import_form.html', context)

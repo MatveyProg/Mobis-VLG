@@ -18,7 +18,11 @@
           {% if product.stock.quantity_available > 0 %}
             <span class="badge text-bg-success badge-stock">{{ product.stock.quantity_available }} шт</span>
           {% else %}
-            <span class="badge text-bg-secondary badge-stock">Нет</span>
+            {% if product.allow_preorder %}
+              <span class="badge text-bg-warning badge-stock">Под заказ</span>
+            {% else %}
+              <span class="badge text-bg-secondary badge-stock">Нет</span>
+            {% endif %}
           {% endif %}
         </div>
       </div>

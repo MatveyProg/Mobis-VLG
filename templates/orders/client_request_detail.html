@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ client_request.number }} — {{ SHOP_NAME }}{% endblock %}
+{% block body_class %}page-inner{% endblock %}
+{% block main_class %}container page-content{% endblock %}
+{% block content %}
+{% if user.is_staff %}
+  {% url 'orders:client_request_inbox' as back_url %}
+  {% include "includes/back_link.html" with url=back_url label="К заявкам" %}
+{% else %}
+  {% url 'orders:client_request_list' as back_url %}
+  {% include "includes/back_link.html" with url=back_url label="К заявкам" %}
+{% endif %}
+<h1 class="h3 mt-2">{{ client_request.number }}</h1>
+<p>
+  <span class="badge text-bg-secondary">{{ client_request.get_status_display }}</span>
+  <span class="text-muted small ms-2">{{ client_request.created_at|date:"d.m.Y H:i" }}</span>
+</p>
+{% if user.is_staff %}
+  <p class="text-muted">{{ client_request.customer_display }}</p>
+{% endif %}
+{% if client_request.comment %}<p>Комментарий: {{ client_request.comment }}</p>{% endif %}
+{% if client_request.review_comment %}<p>Ответ: {{ client_request.review_comment }}</p>{% endif %}
+
+<table class="table">
+  <thead>
+    <tr><th>Артикул</th><th>Наименование</th><th class="text-end">Кол-во</th><th class="text-end">Цена</th><th class="text-end">Сумма</th></tr>
+  </thead>
+  <tbody>
+    {% for item in client_request.items.all %}
+    <tr>
+      <td>{{ item.product.sku }}</td>
+      <td>{{ item.product.display_name }}</td>
+      <td class="text-end">{{ item.quantity }}</td>
+      <td class="text-end">{{ item.price_rub }} ₽</td>
+      <td class="text-end">{{ item.line_total }} ₽</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr class="fw-semibold">
+      <td colspan="4" class="text-end">Итого</td>
+      <td class="text-end">{{ client_request.total_rub }} ₽</td>
+    </tr>
+  </tfoot>
+</table>
+{% endblock %}

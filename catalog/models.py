@@ -145,6 +145,10 @@ class Product(models.Model):
         blank=True,
         db_index=False,
     )
+    allow_preorder = models.BooleanField(
+        'Возможность заказывать при нулевом остатке',
+        default=True,
+    )
     is_active = models.BooleanField('Активен', default=True)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
 
@@ -156,18 +160,29 @@ class Product(models.Model):
     def __str__(self):
         return f'{self.sku} — {self.display_name}'
 
+    def compose_search_text(self) -> str:
+        parts = [
+            self.sku,
+            self.sku_normalized or normalize_code(self.sku),
+            self.name_ru,
+            self.name_en,
+            self.description_ru,
+        ]
+        if self.pk:
+            for number, norm in self.cross_numbers.values_list('number', 'number_normalized'):
+                parts.append(number)
+                parts.append(norm)
+        return ' '.join(part for part in parts if part).casefold()
+
     def save(self, *args, **kwargs):
         self.sku_normalized = normalize_code(self.sku)
-        self.search_text = ' '.join(
-            part for part in (
-                self.sku,
-                self.sku_normalized,
-                self.name_ru,
-                self.name_en,
-                self.description_ru,
-            )
-            if part
-        ).casefold()
+        update_fields = kwargs.get('update_fields')
+        if update_fields is None or 'search_text' in update_fields or set(update_fields) & {
+            'sku', 'name_ru', 'name_en', 'description_ru',
+        }:
+            self.search_text = self.compose_search_text()
+            if update_fields is not None and 'search_text' not in update_fields:
+                kwargs['update_fields'] = list(update_fields) + ['search_text']
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
@@ -180,6 +195,15 @@ class Product(models.Model):
     @property
     def unit(self):
         return 'шт'
+
+    @property
+    def quantity_available(self):
+        stock = getattr(self, 'stock', None)
+        return stock.quantity_available if stock else 0
+
+    @property
+    def can_preorder(self):
+        return bool(self.allow_preorder and self.is_active and self.quantity_available <= 0)
 
 
 class ProductImage(models.Model):
@@ -252,4 +276,4 @@ class ProductVehicle(models.Model):
         years = ''
         if self.year_from or self.year_to:
             years = f' ({self.year_from or "…"}–{self.year_to or "…"})'
-        return f'{self.make} {self.model}{years}'
+        return f'{self.model}{years}'

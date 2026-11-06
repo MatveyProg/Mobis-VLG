@@ -65,6 +65,11 @@
               Заказы
               {% if active_orders_count %}<span class="header__badge">{{ active_orders_count }}</span>{% endif %}
             </a>
+            <a href="{% url 'orders:client_request_inbox' %}" class="header__nav-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Заявки
+              {% if pending_client_requests_count %}<span class="header__badge">{{ pending_client_requests_count }}</span>{% endif %}
+            </a>
             <a href="{% url 'warehouse:stock_balances' %}" class="header__nav-link">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
               Склад
@@ -82,6 +87,11 @@
             <a href="{% url 'orders:order_list' %}" class="header__nav-link">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               Заказы
+            </a>
+            <a href="{% url 'orders:client_request_draft' %}" class="header__nav-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Заявки
+              {% if client_request_count %}<span class="header__badge">{{ client_request_count }}</span>{% endif %}
             </a>
           {% endif %}
           <form method="post" action="{% url 'accounts:logout' %}" class="header__nav-link-form">

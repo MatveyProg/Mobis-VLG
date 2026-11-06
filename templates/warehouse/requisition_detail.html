@@ -55,6 +55,7 @@
         <th class="text-end">₩/ед</th>
         <th class="text-end">Сумма ₩</th>
         <th class="text-end">₽/ед</th>
+        <th class="text-end">Всего сумма в руб</th>
         <th class="text-end">Оприход.</th>
         <th class="text-end">Осталось</th>
         {% if editable %}<th></th>{% endif %}
@@ -66,11 +67,17 @@
         <tr>
           <td>{{ item.line_number }}</td>
           <td>{{ item.product.sku }}</td>
-          <td>{{ item.product.name_en|default:item.product.name_ru }}</td>
+          <td>
+            {{ item.product.name_en|default:item.product.name_ru }}
+            {% if item.source_note %}
+              <div class="small text-muted">{{ item.source_note }}</div>
+            {% endif %}
+          </td>
           <td class="text-end">{{ item.quantity }}</td>
           <td class="text-end">{{ item.purchase_price_krw }}</td>
           <td class="text-end fw-semibold">{{ item.sum_krw }}</td>
           <td class="text-end">{{ item.purchase_price_rub }}</td>
+          <td class="text-end fw-semibold">{{ item.sum_rub }} ₽</td>
           <td class="text-end">{{ item.quantity_received }}</td>
           <td class="text-end fw-semibold">{{ item.quantity_remaining }}</td>
           {% if editable %}
@@ -100,6 +107,7 @@
       <tr class="table-light fw-semibold">
         <td colspan="5" class="text-end">Итого:</td>
         <td class="text-end">{{ total_krw }} ₩</td>
+        <td></td>
         <td class="text-end">{{ total_rub }} ₽</td>
         <td colspan="99"></td>
       </tr>
